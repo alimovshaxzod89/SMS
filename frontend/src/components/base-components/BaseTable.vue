@@ -10,13 +10,23 @@
         <!-- Custom slotlar qo'shish mumkin -->
         <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'photo'">
-                <a-avatar :src="record.photo" :size="40" />
+                <a-avatar :src="record.photo || noAvatarImg" :size="40" />
             </template>
             <template v-else-if="column.key === 'subjects'">
                 <div class="flex flex-wrap gap-1 justify-center">
-                    <a-tag v-for="subject in record.subjects" :key="subject" color="blue">
-                        {{ subject }}
-                    </a-tag>
+                    <template v-if="!record.subjects || record.subjects.length === 0">
+                        <span class="text-gray-400">-</span>
+                    </template>
+                    <template v-else>
+                        <a-tag 
+                            v-for="subject in record.subjects" 
+                            :key="subject._id || subject.id || subject"
+                            color="blue"
+                            class="mb-1"
+                        >
+                            {{ typeof subject === 'string' ? subject : subject.name }}
+                        </a-tag>
+                    </template>
                 </div>
             </template>
             <template v-else-if="column.key === 'students'">
@@ -92,6 +102,7 @@ import { computed } from 'vue';
 import IconEye from '@components/icon/IconEye.vue';
 import IconEdit from '@components/icon/IconEdit.vue';
 import IconTrash from '@components/icon/IconTrash.vue';
+import noAvatarImg from '@/assets/imgs/noAvatar.png';
 
 const props = defineProps({
     columns: {

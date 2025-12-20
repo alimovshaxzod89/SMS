@@ -69,6 +69,7 @@ import IconSort from '@components/icon/IconSort.vue';
 import IconPlus from '@components/icon/IconPlus.vue';
 import BaseTable from '@components/base-components/BaseTable.vue';
 
+
 const router = useRouter();
 const teachersStore = useTeachersStore();
 
@@ -99,12 +100,7 @@ const tableColumns = computed(() => [
     key: 'photo',
     dataIndex: 'photo',
     width: 80,
-    align: 'center',
-    customRender: ({ record }) => {
-      return record.img 
-        ? `<img src="${record.img}" alt="${record.name}" style="width: 40px; height: 40px; border-radius: 50%;" />`
-        : `<div style="width: 40px; height: 40px; border-radius: 50%; background: #ccc; display: flex; align-items: center; justify-content: center;">${record.name?.[0] || 'T'}</div>`;
-    }
+    align: 'center'
   },
   {
     title: 'F.I.O.',
@@ -142,12 +138,6 @@ const tableColumns = computed(() => [
     dataIndex: 'subjects',
     width: 250,
     align: 'center',
-    customRender: ({ record }) => {
-      if (!record.subjects || record.subjects.length === 0) {
-        return '-';
-      }
-      return record.subjects.map(s => s.name).join(', ');
-    }
   },
   {
     title: 'Manzil',
