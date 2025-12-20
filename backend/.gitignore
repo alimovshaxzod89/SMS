@@ -1,0 +1,112 @@
+# ============================================
+# SMS Backend - .gitignore
+# ============================================
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# ============================================
+# Dependencies
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+pm2.log
+pm2-error.log
+
+# ============================================
+# Build & Output
+# ============================================
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# ============================================
+# Testing
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+.jest/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ============================================
+# Database
+# ============================================
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+data/
+*.dump
+
+# ============================================
+# Uploads & Media (if exists)
+# ============================================
+uploads/
+public/uploads/
+temp/
+tmp/
+
+# ============================================
+# Cache
+# ============================================
+.cache/
+.parcel-cache/
+.npm/
+.eslintcache
+.stylelintcache
+
+# ============================================
+# OS Files (if not in root)
+# ============================================
+.DS_Store
+Thumbs.db
+
+# ============================================
+# IDE (if not in root)
+# ============================================
+.vscode/
+.idea/
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# ============================================
+# Personal/Local Ignore File
+# ============================================
+# Each developer can write their own ignore rules to .gitignore.local file
+.gitignore.local
