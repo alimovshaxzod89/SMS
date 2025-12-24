@@ -149,7 +149,7 @@
                         <a-space wrap :size="[8, 8]">
                             <a-tag color="blue" class="cursor-pointer hover:bg-blue-200 transition-colors">
                                 <router-link to="#" class="text-blue-500 hover:text-blue-700">
-                                    Student's Lessons
+                                    Student's Class
                                 </router-link>
                             </a-tag>
                             <a-tag color="blue" class="cursor-pointer hover:bg-blue-200 transition-colors">

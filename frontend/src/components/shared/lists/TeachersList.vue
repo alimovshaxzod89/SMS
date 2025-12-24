@@ -8,6 +8,8 @@
       <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
         <BaseTableSearch 
           v-model="searchValue" 
+          @search="handleSearch"
+          @press-enter="handlePressEnter"
         />
         <a-space class="self-end">
           <a-button 
@@ -69,6 +71,7 @@ import IconFilter from '@components/icon/IconFilter.vue';
 import IconSort from '@components/icon/IconSort.vue';
 import IconPlus from '@components/icon/IconPlus.vue';
 import BaseTable from '@components/base-components/BaseTable.vue';
+import { useSearch } from '@/composables/useSearch';
 
 
 const router = useRouter();
@@ -92,8 +95,25 @@ const props = defineProps({
 
 const emit = defineEmits(['addTeacher', 'editTeacher', 'deleteTeacher']);
 
-// State
-const searchValue = ref('');
+const {searchValue} = useSearch({
+  debounceMs: 500,
+  queryKey: 'search',
+  onSearch: (value) => {
+    performSearch(value);
+  }
+});
+
+const performSearch = (searchQuery = '') => {
+  const page = parseInt(route.query.page) || 1;
+  const pageSize = parseInt(route.query.pageSize) || 10;
+  
+  teachersStore.fetchTeachers({
+    page,
+    pageSize,
+    search: searchQuery,
+  });
+};
+
 
 // Table columns konfiguratsiyasi
 const tableColumns = computed(() => [
@@ -206,12 +226,14 @@ const loadFromURL = () => {
   // Local state'ni yangilash
   searchValue.value = search;
   
-  // Store'ga yuborish
-  teachersStore.fetchTeachers({
-    page,
-    pageSize,
-    search,
-  });
+  // Agar search bo'sh bo'lsa, to'g'ridan-to'g'ri yuklash
+  if (!search) {
+    teachersStore.fetchTeachers({
+      page,
+      pageSize,
+      search: '',
+    });
+  }
 };
 
 /**
@@ -242,29 +264,6 @@ const handleTableChange = ({ pag, filters, sorter }) => {
     // Filter logikasi
   }
 }
-
-/**
- * Search o'zgarganda URL'ni yangilash
- */
- watch(searchValue, (newValue) => {
-  const params = {
-    page: '1', // Qidiruvda birinchi sahifaga qaytish
-    pageSize: teachersStore.pagination.pageSize.toString(),
-  };
-  
-  if (newValue) {
-    params.search = newValue;
-  }
-  
-  updateURLParams(params);
-  
-  // Store'ga yuborish
-  teachersStore.fetchTeachers({
-    page: 1,
-    pageSize: teachersStore.pagination.pageSize,
-    search: newValue,
-  });
-});
 
 /**
  * URL query params o'zgarganda (browser back/forward) ma'lumotlarni yangilash
