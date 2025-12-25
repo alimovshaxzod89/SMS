@@ -60,6 +60,20 @@
                     </template>
                 </div>
             </template>
+            <template v-else-if="column.key === 'gradeId'">
+                <div class="flex flex-wrap gap-1 justify-center">
+                    <a-tag color="blue">
+                        {{ record.gradeId.level || record.gradeId.name || '-' }}
+                    </a-tag>
+                </div>
+            </template>
+            <template v-else-if="column.key === 'classId'">
+                <div class="flex flex-wrap gap-1 justify-center">
+                    <a-tag color="green">
+                        {{ record.classId.name || '-' }}
+                    </a-tag>
+                </div>
+            </template>
             <template v-else-if="column.key === 'action'">
                 <div class="flex items-center justify-center gap-2">
                     <button 
