@@ -27,12 +27,12 @@
       @cancel="closeForm"
     />
   </a-drawer>
-  </template>
+</template>
   
 <script setup>
   import TeachersList from '@/components/shared/lists/TeachersList.vue';
   import { ref } from 'vue';
-  import TeacherForm from './components/TeacherForm.vue';
+import TeacherForm from './components/TeacherForm.vue';
   // Permissions for Admin
   const adminPermissions = {
     canEdit: true,

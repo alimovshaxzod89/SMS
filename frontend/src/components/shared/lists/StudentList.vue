@@ -122,6 +122,13 @@ const handlePressEnter = () => {
 // Table columns konfiguratsiyasi
 const tableColumns = computed(() => [
   {
+    title: '№',
+    key: 'number',
+    width: 60,
+    align: 'center',
+    fixed: 'left' // Agar boshqa columnlar fixed bo'lmasa
+  },
+  {
     title: 'Rasm',
     key: 'photo',
     dataIndex: 'photo',

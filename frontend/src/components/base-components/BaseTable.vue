@@ -8,7 +8,13 @@
         @change="handleTableChange"
     >
         <!-- Custom slotlar qo'shish mumkin -->
-        <template #bodyCell="{ column, record }">
+        <template #bodyCell="{ column, record, index }">
+            <!-- Number column uchun slot -->
+            <template v-if="column.key === 'number'">
+                <span class="text-gray-600 font-medium">
+                    {{ getRowNumber(index) }}
+                </span>
+            </template>
             <template v-if="column.key === 'photo'">
                 <a-avatar :src="record.photo || noAvatarImg" :size="40" />
             </template>
@@ -31,9 +37,19 @@
             </template>
             <template v-else-if="column.key === 'students'">
                 <div class="flex flex-wrap gap-1 justify-center">
-                    <a-tag v-for="student in record.students" :key="student" color="green">
-                        {{ student }}
-                    </a-tag>
+                    <template v-if="!record.students || record.students.length === 0">
+                        <span class="text-gray-400">-</span>
+                    </template>
+                    <template v-else>
+                        <a-tag 
+                            v-for="(student, index) in record.students" 
+                            :key="student._id || student.id || student || index"
+                            color="green"
+                            class="mb-1"
+                        >
+                            {{ typeof student === 'string' ? student : (student.name || student.fullName || '-') }}
+                        </a-tag>
+                    </template>
                 </div>
             </template>
             <template v-else-if="column.key === 'teachers'">
@@ -181,6 +197,18 @@ const scrollConfig = computed(() => {
     
     return props.scroll;
 });
+
+// Row raqamini hisoblash - pagination'ni hisobga oladi
+const getRowNumber = (index) => {
+    if (!props.pagination || props.pagination === false) {
+        return index + 1;
+    }
+    
+    const currentPage = props.pagination.current || 1;
+    const pageSize = props.pagination.pageSize || 10;
+    
+    return (currentPage - 1) * pageSize + index + 1;
+};
 
 const handleTableChange = (pag, filters, sorter) => {
     emits('changePage', { pag, filters, sorter });
