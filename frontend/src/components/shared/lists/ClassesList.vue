@@ -1,178 +1,331 @@
 <template>
-    <a-card class="flex-1 m-4 mt-0 border-none">
-      <!-- Top -->
-      <div class="flex items-center justify-between">
-        <a-typography-title :level="4" class="!mb-0 hidden md:block">
-          All Classes
-        </a-typography-title>
-        <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <BaseTableSearch v-model="searchValue" @search="handleSearch" />
-          <a-space class="self-end">
-            <a-button 
-              shape="circle" 
-              type="text"
-              class="bg-yellow-300 hover:bg-yellow-400"
-            >
-              <template #icon>
-                <IconFilter />
-              </template>
-            </a-button>
-            <a-button 
-              shape="circle" 
-              type="text"
-              class="bg-yellow-300 hover:bg-yellow-400"
-            >
-              <template #icon>
-                <IconSort />
-              </template>
-            </a-button>
-            <a-button 
-              shape="circle" 
-              type="text"
-              class="bg-yellow-300 hover:bg-yellow-400"
-            >
-              <template #icon>
-                <IconPlus />
-              </template>
-            </a-button>
-          </a-space>
-        </div>
-      </div>
-      
-      <!-- List -->
-      <div class="mt-4 overflow-x-auto">
-        <BaseTable 
-          :columns="tableColumns" 
-          :data-source="classesData" 
-          :loading="loading"
-          :pagination="paginationConfig"
-          :permissions="permissions"
-          :scroll="{ x: 'max-content' }"
-          @change-page="handleTableChange"
-          @view-row="handleView"
-          @edit-row="handleEdit"
-          @delete-row="handleDelete"
+  <a-card class="flex-1 m-4 mt-0 border-none">
+    <!-- Top -->
+    <div class="flex items-center justify-between">
+      <a-typography-title :level="4" class="!mb-0 hidden md:block">
+        All Classes
+      </a-typography-title>
+      <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+        <BaseTableSearch 
+          v-model="searchValue" 
+          @search="handleSearch"
+          @press-enter="handlePressEnter"
         />
+        <a-space class="self-end">
+          <a-button 
+            shape="circle" 
+            type="text"
+            class="bg-yellow-300 hover:bg-yellow-400"
+          >
+            <template #icon>
+              <IconFilter />
+            </template>
+          </a-button>
+          <a-button 
+            shape="circle" 
+            type="text"
+            class="bg-yellow-300 hover:bg-yellow-400"
+          >
+            <template #icon>
+              <IconSort />
+            </template>
+          </a-button>
+          <a-button 
+            @click="emit('addClass')"
+            shape="circle" 
+            type="text"
+            class="bg-yellow-300 hover:bg-yellow-400"
+          >
+            <template #icon>
+              <IconPlus />
+            </template>
+          </a-button>
+        </a-space>
       </div>
-    </a-card>
-  </template>
+    </div>
+    
+    <!-- List -->
+    <div class="mt-4 overflow-x-auto">
+      <BaseTable 
+        :columns="tableColumns" 
+        :data-source="formattedClasses" 
+        :loading="classesStore.isLoading"
+        :pagination="paginationConfig"
+        :permissions="permissions"
+        :scroll="{ x: 'max-content' }"
+        @view-row="handleView"
+        @edit-row="handleEdit"
+        @delete-row="handleDelete"
+        @change-page="handleTableChange"
+      />
+    </div>
+  </a-card>
+</template>
+
+<script setup>
+// 1. Imports - Vue core
+import { computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+// 2. Imports - Components
+import BaseTable from '@components/base-components/BaseTable.vue';
+import BaseTableSearch from '@components/base-components/BaseTableSearch.vue';
+import IconFilter from '@components/icon/IconFilter.vue';
+import IconPlus from '@components/icon/IconPlus.vue';
+import IconSort from '@components/icon/IconSort.vue';
+// 3. Imports - Composables
+import { useSearch } from '@/composables/useSearch';
+// 4. Imports - Store
+import { useClassesStore } from '@/store/class/classes.pinia';
+
+
+// 5. Composables
+const router = useRouter();
+const route = useRoute();
+const classesStore = useClassesStore();
+
+// 6. Props
+const props = defineProps({
+  permissions: {
+    type: Object,
+    default: () => ({
+      canEdit: true,
+      canDelete: true,
+      canView: true,
+    })
+  },
+  role: {
+    type: String,
+    default: 'ADMIN'
+  }
+});
+
+// 7. Emits
+const emit = defineEmits(['addClass', 'editClass', 'deleteClass']);
+
+// 8. Composables (useSearch)
+const { searchValue } = useSearch({
+  debounceMs: 500,
+  queryKey: 'search',
+  onSearch: (value) => {
+    performSearch(value);
+  }
+});
+
+// 9. Computed
+// Table columns konfiguratsiyasi
+const tableColumns = computed(() => [
+  {
+    title: '№',
+    key: 'number',
+    width: 60,
+    align: 'center',
+    fixed: 'left'
+  },
+  {
+    title: 'Sinf',
+    key: 'name',
+    dataIndex: 'name',
+    sorter: true,
+    width: 200,
+    align: 'center',
+    ellipsis: true
+  },
+  {
+    title: 'Sig\'im',
+    key: 'capacity',
+    dataIndex: 'capacity',
+    width: 150,
+    align: 'center',
+    ellipsis: true
+  },
+  {
+    title: 'Daraja',
+    key: 'grade',
+    dataIndex: 'grade',
+    width: 150,
+    align: 'center',
+    ellipsis: true,
+    customRender: ({ record }) => {
+      if (record.gradeId && typeof record.gradeId === 'object' && record.gradeId.level) {
+        return record.gradeId.level;
+      }
+      return record.gradeId || '-';
+    }
+  },
+  {
+    title: 'Supervisor (O\'qituvchi)',
+    key: 'supervisor',
+    dataIndex: 'supervisor',
+    width: 250,
+    align: 'center',
+    ellipsis: true,
+    customRender: ({ record }) => {
+      if (record.supervisorId && typeof record.supervisorId === 'object') {
+        return `${record.supervisorId.name || ''} ${record.supervisorId.surname || ''}`.trim() || '-';
+      }
+      return '-';
+    }
+  },
+  {
+    title: 'Amallar',
+    key: 'action',
+    width: 150,
+    fixed: 'right',
+    align: 'center'
+  }
+]);
+
+// Formatlangan sinflar ro'yxati
+const formattedClasses = computed(() => {
+  return classesStore.getClasses.map(cls => ({
+    ...cls,
+    key: cls._id || cls.id, // Table uchun unique key
+  }));
+});
+
+// Pagination config
+const paginationConfig = computed(() => ({
+  current: classesStore.pagination.currentPage,
+  pageSize: classesStore.pagination.pageSize,
+  total: classesStore.pagination.total,
+  showSizeChanger: true,
+  showTotal: (total) => `Jami ${total} ta sinf`,
+  pageSizeOptions: ['10', '20', '50', '100'],
+}));
+
+// 10. Methods
+/**
+ * Qidiruvni amalga oshirish
+ */
+const performSearch = (searchQuery = '') => {
+  const page = parseInt(route.query.page) || 1;
+  const pageSize = parseInt(route.query.pageSize) || 10;
   
-  <script setup>
-  import { ref, computed } from 'vue';
-  import { classesData } from '@/lib/data';
-  import BaseTableSearch from '@components/base-components/BaseTableSearch.vue';
-  import IconFilter from '@components/icon/IconFilter.vue';
-  import IconSort from '@components/icon/IconSort.vue';
-  import IconPlus from '@components/icon/IconPlus.vue';
-  import BaseTable from '@components/base-components/BaseTable.vue';
+  classesStore.fetchClasses({
+    page,
+    pageSize,
+    search: searchQuery,
+  });
+};
+
+/**
+ * URL query params'ni yangilash (browser history'ga yozilmaydi)
+ */
+const updateURLParams = (params) => {
+  const query = {
+    ...route.query,
+    ...params,
+  };
   
-  const props = defineProps({
-    permissions: {
-      type: Object,
-      default: () => ({
-        canEdit: true,
-        canDelete: true,
-        canView: true,
-      })
-    },
-    role: {
-      type: String,
-      default: 'ADMIN'
+  // Bo'sh qiymatlarni olib tashlash
+  Object.keys(query).forEach(key => {
+    if (query[key] === '' || query[key] === null || query[key] === undefined) {
+      delete query[key];
     }
   });
   
-  // State
-  const searchValue = ref('');
-  const loading = ref(false);
-  const currentPage = ref(1);
-  const pageSize = ref(10);
+  router.replace({ query });
+};
+
+/**
+ * URL query params'dan ma'lumotlarni o'qib, store'ga yuborish
+ */
+const loadFromURL = () => {
+  const query = route.query;
+  const page = parseInt(query.page) || 1;
+  const pageSize = parseInt(query.pageSize) || 10;
+  const search = query.search || '';
   
-  // Table columns konfiguratsiyasi
-  const tableColumns = computed(() => [
-    {
-      title: 'Sinflar',
-      key: 'name',
-      dataIndex: 'name',
-      sorter: true,
-      ellipsis: true
-    },
-    {
-      title: 'O\'quvchilar soni',
-      key: 'capacity',
-      dataIndex: 'capacity',
-      align: 'center',
-      ellipsis: true
-    },
-    {
-      title: 'Daraja',
-      key: 'grade',
-      dataIndex: 'grade',
-      align: 'center',
-      ellipsis: true
-    },
-    {
-      title: 'Supervisor (O\'qituvchi)',
-      key: 'supervisor',
-      dataIndex: 'supervisor',
-      align: 'center',
-      ellipsis: true
-    },
-    {
-      title: 'Amallar',
-      key: 'action',
-      align: 'center'
-    }
-  ]);
+  // Local state'ni yangilash
+  searchValue.value = search;
   
-  // Pagination config
-  const paginationConfig = computed(() => ({
-    current: currentPage.value,
-    pageSize: pageSize.value,
-    total: searchValue.value 
-      ? classesData.filter(cls => 
-          cls.name.toLowerCase().includes(searchValue.value.toLowerCase()) ||
-          cls.capacity.includes(searchValue.value) ||
-          cls.grade.includes(searchValue.value) ||
-          cls.supervisor.includes(searchValue.value)
-        ).length
-      : classesData.length,
-    showSizeChanger: true,
-    showTotal: (total) => `Jami ${total} ta sinf`
-  }));
+  // Agar search bo'sh bo'lsa, to'g'ridan-to'g'ri yuklash
+  if (!search) {
+    classesStore.fetchClasses({
+      page,
+      pageSize,
+      search: '',
+    });
+  }
+};
+
+/**
+ * Pagination o'zgarganda URL'ni yangilash
+ */
+const handleTableChange = ({ pag, filters, sorter }) => {
+  if (pag) {
+    updateURLParams({
+      page: pag.current,
+      pageSize: pag.pageSize,
+      search: searchValue.value || '',
+    });
+  }
+
+  // Kelajakda sorter va filterlarni ham qo'shish mumkin
+  if (sorter) {
+    // Sorting logikasi
+  }
   
-  // Handlers
-  const handleSearch = (value) => {
-    searchValue.value = value;
-    currentPage.value = 1; // Qidiruvda birinchi sahifaga qaytish
-  };
+  if (filters) {
+    // Filter logikasi
+  }
+};
+
+const handleSearch = (value) => {};
+
+const handlePressEnter = () => {};
+
+const handleView = (record) => {
+  router.push({ 
+    name: "ClassDetail", 
+    params: { id: record._id || record.id } 
+  });
+};
+
+const handleEdit = (record) => {
+  emit('editClass', record);
+};
+
+const handleDelete = (record) => {
+  emit('deleteClass', record);
+};
+
+// 11. Watchers
+/**
+ * URL query params o'zgarganda (browser back/forward) ma'lumotlarni yangilash
+ */
+watch(() => route.query, (newQuery) => {
+  // Faqat URL o'zgarganda ishlaydi (component ichida o'zgartirishlar emas)
+  const page = parseInt(newQuery.page) || 1;
+  const pageSize = parseInt(newQuery.pageSize) || 10;
+  const search = newQuery.search || '';
   
-  const handleTableChange = ({ pag, filters, sorter }) => {
-    if (pag) {
-      currentPage.value = pag.current;
-      pageSize.value = pag.pageSize;
-    }
-    // Sorter va filterlarni qo'shish mumkin
-  };
-  
-  const handlePaginationChange = (page, size) => {
-    currentPage.value = page;
-    pageSize.value = size;
-  };
-  
-  const handleView = (record) => {
-    console.log('View class:', record);
-    // View logic
-  };
-  
-  const handleEdit = (record) => {
-    console.log('Edit class:', record);
-    // Edit logic
-  };
-  
-  const handleDelete = (record) => {
-    console.log('Delete class:', record);
-    // Delete logic with confirmation
-  };
-  </script>
-  
-  <style scoped></style>
+  // Agar store'dagi qiymatlar URL'dan farq qilsa, yangilash
+  if (
+    classesStore.pagination.currentPage !== page ||
+    classesStore.pagination.pageSize !== pageSize ||
+    searchValue.value !== search
+  ) {
+    searchValue.value = search;
+    classesStore.fetchClasses({
+      page,
+      pageSize,
+      search,
+    });
+  }
+}, { deep: true });
+
+// 12. Lifecycle Hooks
+// Component mount bo'lganda sinflarni yuklash
+onMounted(() => {
+  // Agar URL'da query params bo'lsa, ularni ishlatish
+  if (Object.keys(route.query).length > 0) {
+    loadFromURL();
+  } else {
+    // Aks holda default qiymatlar bilan yuklash
+    classesStore.fetchClasses();
+  }
+});
+</script>
+
+<style scoped></style>

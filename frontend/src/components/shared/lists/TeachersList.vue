@@ -111,107 +111,7 @@ const { searchValue } = useSearch({
   }
 });
 
-// 9. Methods
-const performSearch = (searchQuery = '') => {
-  const page = parseInt(route.query.page) || 1;
-  const pageSize = parseInt(route.query.pageSize) || 10;
-  
-  teachersStore.fetchTeachers({
-    page,
-    pageSize,
-    search: searchQuery,
-  });
-};
-
-/**
- * URL query params'ni yangilash (browser history'ga yozilmaydi)
- */
-const updateURLParams = (params) => {
-  const query = {
-    ...route.query,
-    ...params,
-  };
-  
-  // Bo'sh qiymatlarni olib tashlash
-  Object.keys(query).forEach(key => {
-    if (query[key] === '' || query[key] === null || query[key] === undefined) {
-      delete query[key];
-    }
-  });
-  
-  router.replace({ query });
-};
-
-/**
- * URL query params'dan ma'lumotlarni o'qib, store'ga yuborish
- */
-const loadFromURL = () => {
-  const query = route.query;
-  const page = parseInt(query.page) || 1;
-  const pageSize = parseInt(query.pageSize) || 10;
-  const search = query.search || '';
-  
-  // Local state'ni yangilash
-  searchValue.value = search;
-  
-  // Agar search bo'sh bo'lsa, to'g'ridan-to'g'ri yuklash
-  if (!search) {
-    teachersStore.fetchTeachers({
-      page,
-      pageSize,
-      search: '',
-    });
-  }
-};
-
-/**
- * Pagination o'zgarganda URL'ni yangilash
- */
-const handleTableChange = ({ pag, filters, sorter }) => {
-  if (pag) {
-    updateURLParams({
-      page: pag.current,
-      pageSize: pag.pageSize,
-      search: searchValue.value || '',
-    });
-    
-    // Store'ga yuborish
-    // teachersStore.fetchTeachers({
-    //   page: pag.current,
-    //   pageSize: pag.pageSize,
-    //   search: searchValue.value,
-    // });
-  }
-
-  // Kelajakda sorter va filterlarni ham qo'shish mumkin
-  if (sorter) {
-    // Sorting logikasi
-  }
-  
-  if (filters) {
-    // Filter logikasi
-  }
-};
-
-const handleView = (record) => {
-  router.push({ 
-    name: "TeacherDetail", 
-    params: { id: record._id || record.id } 
-  });
-};
-
-const handleEdit = (record) => {
-  emit('editTeacher', record);
-};
-
-const handleDelete = (record) => {
-  emit('deleteTeacher', record);
-};
-
-const handleSearch = (value) => {};
-const handlePressEnter = () => {};
-
-// 10. Computed Properties
+// 9. Computed
 // Table columns konfiguratsiyasi
 const tableColumns = computed(() => [
   {
@@ -298,6 +198,110 @@ const paginationConfig = computed(() => ({
   showTotal: (total) => `Jami ${total} ta o'qituvchi`,
   pageSizeOptions: ['10', '20', '50', '100'],
 }));
+
+// 10. Methods
+/**
+ * Qidiruvni amalga oshirish
+ */
+const performSearch = (searchQuery = '') => {
+  const page = parseInt(route.query.page) || 1;
+  const pageSize = parseInt(route.query.pageSize) || 10;
+  
+  teachersStore.fetchTeachers({
+    page,
+    pageSize,
+    search: searchQuery,
+  });
+};
+
+/**
+ * URL query params'ni yangilash (browser history'ga yozilmaydi)
+ */
+const updateURLParams = (params) => {
+  const query = {
+    ...route.query,
+    ...params,
+  };
+  
+  // Bo'sh qiymatlarni olib tashlash
+  Object.keys(query).forEach(key => {
+    if (query[key] === '' || query[key] === null || query[key] === undefined) {
+      delete query[key];
+    }
+  });
+  
+  router.replace({ query });
+};
+
+/**
+ * URL query params'dan ma'lumotlarni o'qib, store'ga yuborish
+ */
+const loadFromURL = () => {
+  const query = route.query;
+  const page = parseInt(query.page) || 1;
+  const pageSize = parseInt(query.pageSize) || 10;
+  const search = query.search || '';
+  
+  // Local state'ni yangilash
+  searchValue.value = search;
+  
+  // Agar search bo'sh bo'lsa, to'g'ridan-to'g'ri yuklash
+  if (!search) {
+    teachersStore.fetchTeachers({
+      page,
+      pageSize,
+      search: '',
+    });
+  }
+};
+
+/**
+ * Pagination o'zgarganda URL'ni yangilash
+ */
+const handleTableChange = ({ pag, filters, sorter }) => {
+  if (pag) {
+    updateURLParams({
+      page: pag.current,
+      pageSize: pag.pageSize,
+      search: searchValue.value || '',
+    });
+    
+    // Store'ga yuborish
+    // teachersStore.fetchTeachers({
+    //   page: pag.current,
+    //   pageSize: pag.pageSize,
+    //   search: searchValue.value,
+    // });
+  }
+
+  // Kelajakda sorter va filterlarni ham qo'shish mumkin
+  if (sorter) {
+    // Sorting logikasi
+  }
+  
+  if (filters) {
+    // Filter logikasi
+  }
+};
+
+const handleSearch = (value) => {};
+
+const handlePressEnter = () => {};
+
+const handleView = (record) => {
+  router.push({ 
+    name: "TeacherDetail", 
+    params: { id: record._id || record.id } 
+  });
+};
+
+const handleEdit = (record) => {
+  emit('editTeacher', record);
+};
+
+const handleDelete = (record) => {
+  emit('deleteTeacher', record);
+};
 
 // 11. Watchers
 /**

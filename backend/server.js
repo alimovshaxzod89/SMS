@@ -29,6 +29,7 @@ const subjectRoutes = require('./routes/subjectRoutes');
 const classRoutes = require('./routes/classRoutes');
 const examRoutes = require('./routes/examRoutes');
 const lessonRoutes = require('./routes/lessonRoutes');
+const gradeRoutes = require('./routes/gradeRoutes');
 
 const app = express();
 
@@ -114,6 +115,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/lessons', lessonRoutes);
+app.use('/api/grades', gradeRoutes);
 
 // 404 handler
 app.use((req, res) => {
