@@ -95,6 +95,13 @@
                     </a-tag>
                 </div>
             </template>
+            <template v-else-if="column.key === 'startTime'">
+                <div class="flex flex-wrap gap-1 justify-center">
+                    <span class="text-gray-600 font-medium">
+                        {{ record.startTime | formatDate }}
+                    </span>
+                </div>
+            </template>
             <template v-else-if="column.key === 'action'">
                 <div class="flex items-center justify-center gap-2">
                     <button 
@@ -148,6 +155,7 @@ import IconEye from '@components/icon/IconEye.vue';
 import IconEdit from '@components/icon/IconEdit.vue';
 import IconTrash from '@components/icon/IconTrash.vue';
 import noAvatarImg from '@/assets/imgs/noAvatar.png';
+import dayjs from 'dayjs';
 
 const props = defineProps({
     columns: {
@@ -204,6 +212,10 @@ const scrollConfig = computed(() => {
     
     return props.scroll;
 });
+
+const formatDate = (date) => {
+    return dayjs(date).format('DD.MM.YYYY');
+}
 
 // Row raqamini hisoblash - pagination'ni hisobga oladi
 const getRowNumber = (index) => {

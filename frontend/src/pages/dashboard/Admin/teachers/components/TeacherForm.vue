@@ -56,86 +56,108 @@
     </div>
 </template>
 <script setup>
+// 1. Imports - Vue core
 import { ref, watch } from 'vue';
 
+// 2. Props
 const props = defineProps({
-    mode: {
-        type: String,
-        default: 'create' // create or edit
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    },
-    teacher: {
-        type: Object,
-        default: () => ({
-            name: '',
-            email: '',
-            phone: '',
-            address: ''
-        })
-    }
-})
+  mode: {
+    type: String,
+    default: 'create' // create or edit
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  teacher: {
+    type: Object,
+    default: () => ({
+      name: '',
+      email: '',
+      phone: '',
+      address: ''
+    })
+  }
+});
+
+// 3. Emits
 const emit = defineEmits(['cancel', 'submit']);
 
+// 4. Reactive State
 const formRef = ref(null);
 const formState = ref({
+  name: '',
+  email: '',
+  phone: '',
+  address: ''
+});
+
+// 5. Methods
+/**
+ * Formani tozalash
+ */
+const resetForm = () => {
+  formState.value = {
     name: '',
     email: '',
     phone: '',
     address: ''
-});
+  };
+  formRef.value?.resetFields();
+};
 
-// Props o'zgarganda formState ni yangilash
-watch(
-    () => props.teacher,
-    (newTeacher) => {
-        if (newTeacher) {
-            formState.value = {
-                name: newTeacher.name || '',
-                email: newTeacher.email || '',
-                phone: newTeacher.phone || '',
-                address: newTeacher.address || ''
-            };
-        } else {
-            // Create mode uchun formani tozalash
-            formState.value = {
-                name: '',
-                email: '',
-                phone: '',
-                address: ''
-            };
-        }
-    },
-    { immediate: true, deep: true }
-);
+/**
+ * Formani teacher ma'lumotlari bilan to'ldirish
+ * @param {Object} teacher - O'qituvchi ma'lumotlari
+ */
+const populateForm = (teacher) => {
+  if (teacher && Object.keys(teacher).length > 0) {
+    formState.value = {
+      name: teacher.name || '',
+      email: teacher.email || '',
+      phone: teacher.phone || '',
+      address: teacher.address || ''
+    };
+  } else {
+    resetForm();
+  }
+};
 
-// Mode o'zgarganda ham formani tozalash
-watch(
-    () => props.mode,
-    (newMode) => {
-        if (newMode === 'create') {
-            formState.value = {
-                name: '',
-                email: '',
-                phone: '',
-                address: ''
-            };
-            // Form validatsiyasini tozalash
-            formRef.value?.resetFields();
-        }
-    }
-);
-
+/**
+ * Form submit qilish
+ */
 const handleSubmit = () => {
-    formRef.value?.validate()
+  formRef.value?.validate()
     .then(() => {
-        emit('submit', formState.value);
+      emit('submit', formState.value);
     })
     .catch((error) => {
-        console.error(error);
-    })
-}
+      console.error('Form validation error:', error);
+    });
+};
+
+// 6. Watchers
+/**
+ * Props o'zgarganda formState ni yangilash
+ */
+watch(
+  () => props.teacher,
+  (newTeacher) => {
+    populateForm(newTeacher);
+  },
+  { immediate: true, deep: true }
+);
+
+/**
+ * Mode o'zgarganda ham formani tozalash
+ */
+watch(
+  () => props.mode,
+  (newMode) => {
+    if (newMode === 'create') {
+      resetForm();
+    }
+  }
+);
 </script>
 <style scoped></style>

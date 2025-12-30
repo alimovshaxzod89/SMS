@@ -87,11 +87,16 @@ exports.createExam = async (req, res, next) => {
 
     // ✅ Manual populate teacher
     if (examWithDetails.lessonId && examWithDetails.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: examWithDetails.lessonId.teacherId })
+      // teacherId ni stringga aylantirish (agar object bo'lsa)
+      const teacherIdString = typeof examWithDetails.lessonId.teacherId === 'string' 
+        ? examWithDetails.lessonId.teacherId 
+        : (examWithDetails.lessonId.teacherId?.id || examWithDetails.lessonId.teacherId?._id?.toString() || examWithDetails.lessonId.teacherId);
+      
+      const teacher = await Teacher.findOne({ id: teacherIdString })
         .select('id name surname')
         .lean();
       
-      examWithDetails.lessonId.teacherId = teacher || { id: examWithDetails.lessonId.teacherId };
+      examWithDetails.lessonId.teacherId = teacher || { id: teacherIdString };
     }
 
     res.status(201).json({
@@ -187,11 +192,16 @@ exports.getAllExams = async (req, res, next) => {
     
     for (const exam of exams) {
       if (exam.lessonId && exam.lessonId.teacherId) {
-        const teacher = await Teacher.findOne({ id: exam.lessonId.teacherId })
+        // teacherId ni stringga aylantirish (agar object bo'lsa)
+        const teacherIdString = typeof exam.lessonId.teacherId === 'string' 
+          ? exam.lessonId.teacherId 
+          : (exam.lessonId.teacherId?.id || exam.lessonId.teacherId?._id?.toString() || exam.lessonId.teacherId);
+        
+        const teacher = await Teacher.findOne({ id: teacherIdString })
           .select('id name surname')
           .lean();
         
-        exam.lessonId.teacherId = teacher || { id: exam.lessonId.teacherId };
+        exam.lessonId.teacherId = teacher || { id: teacherIdString };
       }
     }
 
@@ -241,11 +251,16 @@ exports.getExam = async (req, res, next) => {
 
     // ✅ Manual populate teacher ma'lumotlari
     if (exam.lessonId && exam.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: exam.lessonId.teacherId })
+      // teacherId ni stringga aylantirish (agar object bo'lsa)
+      const teacherIdString = typeof exam.lessonId.teacherId === 'string' 
+        ? exam.lessonId.teacherId 
+        : (exam.lessonId.teacherId?.id || exam.lessonId.teacherId?._id?.toString() || exam.lessonId.teacherId);
+      
+      const teacher = await Teacher.findOne({ id: teacherIdString })
         .select('id name surname email phone')
         .lean();
       
-      exam.lessonId.teacherId = teacher || { id: exam.lessonId.teacherId };
+      exam.lessonId.teacherId = teacher || { id: teacherIdString };
     }
 
     res.status(200).json({
@@ -348,11 +363,16 @@ exports.updateExam = async (req, res, next) => {
 
     // ✅ Manual populate teacher ma'lumotlari
     if (exam.lessonId && exam.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: exam.lessonId.teacherId })
+      // teacherId ni stringga aylantirish (agar object bo'lsa)
+      const teacherIdString = typeof exam.lessonId.teacherId === 'string' 
+        ? exam.lessonId.teacherId 
+        : (exam.lessonId.teacherId?.id || exam.lessonId.teacherId?._id?.toString() || exam.lessonId.teacherId);
+      
+      const teacher = await Teacher.findOne({ id: teacherIdString })
         .select('id name surname email phone')
         .lean();
       
-      exam.lessonId.teacherId = teacher || { id: exam.lessonId.teacherId };
+      exam.lessonId.teacherId = teacher || { id: teacherIdString };
     }
 
     res.status(200).json({

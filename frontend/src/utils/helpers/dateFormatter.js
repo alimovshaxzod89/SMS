@@ -1,0 +1,7 @@
+// utils/helpers/dateFormatter.js
+import dayjs from 'dayjs';
+
+export const formatDate = (date, format = 'DD.MM.YYYY') => {
+  if (!date) return '-';
+  return dayjs(date).format(format);
+};

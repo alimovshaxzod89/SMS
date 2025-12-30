@@ -7,7 +7,6 @@ const lessonSchema = new mongoose.Schema({
   },
   teacherId: {
     type: String,
-    ref: 'Teacher',
     required: true
   },
   subjectId: {
