@@ -95,10 +95,10 @@
                     </a-tag>
                 </div>
             </template>
-            <template v-else-if="column.key === 'startTime'">
+            <template v-else-if="column.key === 'startTime' || column.key === 'dueDate'">
                 <div class="flex flex-wrap gap-1 justify-center">
                     <span class="text-gray-600 font-medium">
-                        {{ record.startTime | formatDate }}
+                        {{ formatDate(record[column.key]) }}
                     </span>
                 </div>
             </template>

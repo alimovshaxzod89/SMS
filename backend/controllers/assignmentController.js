@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Assignment = require('../models/Assignment');
 const Lesson = require('../models/Lesson');
 const Teacher = require('../models/Teacher');
+const Subject = require('../models/Subject');
 
 // Create Assignment
 exports.createAssignment = async (req, res, next) => {
@@ -63,11 +64,20 @@ exports.createAssignment = async (req, res, next) => {
 
     // Manual populate teacher
     if (assignmentWithDetails.lessonId && assignmentWithDetails.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: assignmentWithDetails.lessonId.teacherId })
-        .select('id name surname')
-        .lean();
+      // teacherId string bo'lishini ta'minlash (object bo'lsa, id fieldini olish)
+      let teacherIdValue = assignmentWithDetails.lessonId.teacherId;
+      if (typeof teacherIdValue === 'object' && teacherIdValue !== null) {
+        teacherIdValue = teacherIdValue.id;
+      }
       
-      assignmentWithDetails.lessonId.teacherId = teacher || { id: assignmentWithDetails.lessonId.teacherId };
+      // Faqat string bo'lsa Teacher ni qidirish
+      if (teacherIdValue && typeof teacherIdValue === 'string') {
+        const teacher = await Teacher.findOne({ id: teacherIdValue })
+          .select('id name surname')
+          .lean();
+        
+        assignmentWithDetails.lessonId.teacherId = teacher || { id: teacherIdValue };
+      }
     }
 
     res.status(201).json({
@@ -96,8 +106,9 @@ exports.getAllAssignments = async (req, res, next) => {
     const { page = 1, limit = 10, search, classId, teacherId, lessonId } = req.query;
     
     let query = {};
+    let filteredLessonIds = null;
     
-    // Build lesson query for filtering
+    // Step 1: Build lesson query for filtering (classId, teacherId)
     let lessonQuery = {};
     
     // Validate ObjectIds for classId
@@ -117,6 +128,7 @@ exports.getAllAssignments = async (req, res, next) => {
     }
 
     // Filter by lessonId if provided
+    let specificLessonId = null;
     if (lessonId) {
       if (!mongoose.Types.ObjectId.isValid(lessonId)) {
         return res.status(400).json({
@@ -124,14 +136,13 @@ exports.getAllAssignments = async (req, res, next) => {
           error: 'Invalid lesson ID format'
         });
       }
-      query.lessonId = lessonId;
+      specificLessonId = lessonId;
     }
     
-    // If we have lesson filters, find matching lessons first
+    // Step 2: Apply lesson filters (classId, teacherId) to get filtered lesson IDs
     if (Object.keys(lessonQuery).length > 0) {
       const lessons = await Lesson.find(lessonQuery).select('_id').lean();
       
-      // If no lessons found, return empty result
       if (lessons.length === 0) {
         return res.status(200).json({
           success: true,
@@ -142,11 +153,11 @@ exports.getAllAssignments = async (req, res, next) => {
         });
       }
       
-      // Combine with existing lessonId filter if any
-      const lessonIds = lessons.map(l => l._id);
-      if (query.lessonId) {
-        // If lessonId was already set, check if it's in the filtered lessons
-        if (!lessonIds.some(id => id.toString() === query.lessonId.toString())) {
+      filteredLessonIds = lessons.map(l => l._id);
+      
+      // If specific lessonId was provided, check if it's in the filtered lessons
+      if (specificLessonId) {
+        if (!filteredLessonIds.some(id => id.toString() === specificLessonId.toString())) {
           return res.status(200).json({
             success: true,
             count: 0,
@@ -155,15 +166,82 @@ exports.getAllAssignments = async (req, res, next) => {
             data: []
           });
         }
+        // Set the specific lessonId in query
+        query.lessonId = specificLessonId;
       } else {
-        query.lessonId = { $in: lessonIds };
+        query.lessonId = { $in: filteredLessonIds };
       }
+    } else if (specificLessonId) {
+      // No other filters but specific lessonId provided
+      query.lessonId = specificLessonId;
     }
     
-    // Search by title with sanitization
-    if (search && typeof search === 'string') {
-      const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.title = { $regex: sanitizedSearch, $options: 'i' };
+    // Step 3: Handle search by title and subject name
+    if (search && typeof search === 'string' && search.trim()) {
+      const sanitizedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Determine which lessons to search in
+      let lessonsToSearchIn = null;
+      if (specificLessonId) {
+        lessonsToSearchIn = [specificLessonId];
+      } else if (filteredLessonIds) {
+        lessonsToSearchIn = filteredLessonIds;
+      }
+      
+      // Search by subject name through lesson
+      const subjects = await Subject.find({
+        name: { $regex: sanitizedSearch, $options: 'i' }
+      }).select('_id').lean();
+      
+      let searchLessonIds = [];
+      if (subjects.length > 0) {
+        const subjectIds = subjects.map(s => s._id);
+        let lessonQueryBySubject = { subjectId: { $in: subjectIds } };
+        
+        // If we have lessons to search in, intersect with them
+        if (lessonsToSearchIn) {
+          lessonQueryBySubject._id = { $in: lessonsToSearchIn };
+        }
+        
+        const lessonsBySubject = await Lesson.find(lessonQueryBySubject)
+          .select('_id')
+          .lean();
+        
+        searchLessonIds = lessonsBySubject.map(l => l._id);
+      }
+      
+      // Build search query: title OR lessonId (by subject name)
+      const searchConditions = [];
+      
+      // Add title search condition
+      if (lessonsToSearchIn) {
+        searchConditions.push({
+          title: { $regex: sanitizedSearch, $options: 'i' },
+          lessonId: { $in: lessonsToSearchIn }
+        });
+      } else {
+        searchConditions.push({ title: { $regex: sanitizedSearch, $options: 'i' } });
+      }
+      
+      // Add lessonId search condition if we found lessons by subject
+      if (searchLessonIds.length > 0) {
+        searchConditions.push({ lessonId: { $in: searchLessonIds } });
+      }
+      
+      // Apply search conditions
+      if (searchConditions.length > 0) {
+        query.$or = searchConditions;
+        // Remove lessonId from query as it's now handled in $or
+        if (query.lessonId) {
+          delete query.lessonId;
+        }
+      } else if (lessonsToSearchIn) {
+        // No search results but we have lessons to filter
+        query.lessonId = { $in: lessonsToSearchIn };
+      }
+    } else if (filteredLessonIds && !query.lessonId) {
+      // No search but we have filtered lessons
+      query.lessonId = { $in: filteredLessonIds };
     }
 
     // Validate and sanitize pagination
@@ -187,11 +265,20 @@ exports.getAllAssignments = async (req, res, next) => {
     // Manual populate teacher ma'lumotlari
     for (const assignment of assignments) {
       if (assignment.lessonId && assignment.lessonId.teacherId) {
-        const teacher = await Teacher.findOne({ id: assignment.lessonId.teacherId })
-          .select('id name surname')
-          .lean();
+        // teacherId string bo'lishini ta'minlash (object bo'lsa, id fieldini olish)
+        let teacherIdValue = assignment.lessonId.teacherId;
+        if (typeof teacherIdValue === 'object' && teacherIdValue !== null) {
+          teacherIdValue = teacherIdValue.id;
+        }
         
-        assignment.lessonId.teacherId = teacher || { id: assignment.lessonId.teacherId };
+        // Faqat string bo'lsa Teacher ni qidirish
+        if (teacherIdValue && typeof teacherIdValue === 'string') {
+          const teacher = await Teacher.findOne({ id: teacherIdValue })
+            .select('id name surname')
+            .lean();
+          
+          assignment.lessonId.teacherId = teacher || { id: teacherIdValue };
+        }
       }
     }
 
@@ -241,11 +328,20 @@ exports.getAssignment = async (req, res, next) => {
 
     // Manual populate teacher ma'lumotlari
     if (assignment.lessonId && assignment.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: assignment.lessonId.teacherId })
-        .select('id name surname email phone')
-        .lean();
+      // teacherId string bo'lishini ta'minlash (object bo'lsa, id fieldini olish)
+      let teacherIdValue = assignment.lessonId.teacherId;
+      if (typeof teacherIdValue === 'object' && teacherIdValue !== null) {
+        teacherIdValue = teacherIdValue.id;
+      }
       
-      assignment.lessonId.teacherId = teacher || { id: assignment.lessonId.teacherId };
+      // Faqat string bo'lsa Teacher ni qidirish
+      if (teacherIdValue && typeof teacherIdValue === 'string') {
+        const teacher = await Teacher.findOne({ id: teacherIdValue })
+          .select('id name surname email phone')
+          .lean();
+        
+        assignment.lessonId.teacherId = teacher || { id: teacherIdValue };
+      }
     }
 
     res.status(200).json({
@@ -355,11 +451,20 @@ exports.updateAssignment = async (req, res, next) => {
 
     // Manual populate teacher ma'lumotlari
     if (assignment.lessonId && assignment.lessonId.teacherId) {
-      const teacher = await Teacher.findOne({ id: assignment.lessonId.teacherId })
-        .select('id name surname email phone')
-        .lean();
+      // teacherId string bo'lishini ta'minlash (object bo'lsa, id fieldini olish)
+      let teacherIdValue = assignment.lessonId.teacherId;
+      if (typeof teacherIdValue === 'object' && teacherIdValue !== null) {
+        teacherIdValue = teacherIdValue.id;
+      }
       
-      assignment.lessonId.teacherId = teacher || { id: assignment.lessonId.teacherId };
+      // Faqat string bo'lsa Teacher ni qidirish
+      if (teacherIdValue && typeof teacherIdValue === 'string') {
+        const teacher = await Teacher.findOne({ id: teacherIdValue })
+          .select('id name surname email phone')
+          .lean();
+        
+        assignment.lessonId.teacherId = teacher || { id: teacherIdValue };
+      }
     }
 
     res.status(200).json({
