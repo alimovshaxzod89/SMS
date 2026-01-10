@@ -14,11 +14,11 @@ const { validateAssignment, validateAssignmentUpdate } = require('../middleware/
 
 // Added to all routes that require authentication
 router.route('/')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAllAssignments)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAllAssignments)
   .post(protect, authorize('admin', 'teacher'), validateAssignment, createAssignment);
 
 router.route('/:id')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAssignment)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAssignment)
   .put(protect, authorize('admin', 'teacher'), validateAssignmentUpdate, updateAssignment)
   .delete(protect, authorize('admin', 'teacher'), deleteAssignment);
 

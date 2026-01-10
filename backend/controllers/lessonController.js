@@ -59,49 +59,53 @@ exports.createLesson = async (req, res, next) => {
       });
     }
 
-    // Validate day, startTime, endTime
-    if (!day || !startTime || !endTime) {
-      return res.status(400).json({
-        success: false,
-        error: 'Please provide day, startTime, and endTime'
-      });
-    }
+    // Validate day, startTime, endTime (optional fields)
+    // Agar bittasi ham berilgan bo'lsa, barchasi bo'lishi kerak
+    const hasScheduleFields = day || startTime || endTime;
+    if (hasScheduleFields) {
+      if (!day || !startTime || !endTime) {
+        return res.status(400).json({
+          success: false,
+          error: 'If providing schedule information, please provide day, startTime, and endTime'
+        });
+      }
 
-    const validDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-    if (!validDays.includes(day.toUpperCase())) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid day. Must be one of: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY'
-      });
-    }
+      const validDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+      if (!validDays.includes(day.toUpperCase())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid day. Must be one of: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY'
+        });
+      }
 
-    // Validate time format (HH:MM)
-    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(startTime)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid startTime format. Use HH:MM format (e.g., 08:00)'
-      });
-    }
+      // Validate time format (HH:MM)
+      const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(startTime)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid startTime format. Use HH:MM format (e.g., 08:00)'
+        });
+      }
 
-    if (!timeRegex.test(endTime)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid endTime format. Use HH:MM format (e.g., 09:00)'
-      });
-    }
+      if (!timeRegex.test(endTime)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid endTime format. Use HH:MM format (e.g., 09:00)'
+        });
+      }
 
-    // Validate that endTime is after startTime
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const [endHours, endMinutes] = endTime.split(':').map(Number);
-    const startTotalMinutes = startHours * 60 + startMinutes;
-    const endTotalMinutes = endHours * 60 + endMinutes;
+      // Validate that endTime is after startTime
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      const endTotalMinutes = endHours * 60 + endMinutes;
 
-    if (endTotalMinutes <= startTotalMinutes) {
-      return res.status(400).json({
-        success: false,
-        error: 'endTime must be after startTime'
-      });
+      if (endTotalMinutes <= startTotalMinutes) {
+        return res.status(400).json({
+          success: false,
+          error: 'endTime must be after startTime'
+        });
+      }
     }
 
     // Check if lesson with same name already exists for this class
@@ -118,15 +122,22 @@ exports.createLesson = async (req, res, next) => {
     }
 
     // ✅ Teacher ning id fieldini saqlash (String)
-    const lesson = await Lesson.create({
+    // Build lesson object with optional schedule fields
+    const lessonData = {
       name,
       teacherId: teacher.id,  // String type
       subjectId,
-      classId,
-      day: day.toUpperCase(),
-      startTime,
-      endTime
-    });
+      classId
+    };
+
+    // Add schedule fields only if provided
+    if (hasScheduleFields) {
+      lessonData.day = day.toUpperCase();
+      lessonData.startTime = startTime;
+      lessonData.endTime = endTime;
+    }
+
+    const lesson = await Lesson.create(lessonData);
 
     // ✅ Populate the response
     const populatedLesson = await Lesson.findById(lesson._id)

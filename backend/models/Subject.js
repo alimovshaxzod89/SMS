@@ -18,7 +18,7 @@ const subjectSchema = new mongoose.Schema({
 });
 
 // ✅ Index for faster lookups
-subjectSchema.index({ name: 1 });
+// Note: name field already has unique index from unique: true, so no need to add it again
 subjectSchema.index({ teachers: 1 });
 subjectSchema.index({ createdAt: -1 });
 

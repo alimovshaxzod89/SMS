@@ -49,13 +49,27 @@ exports.createStudent = async (req, res, next) => {
     }
 
     if (parentId) {
-      const parent = await Parent.findOne({ id: parentId });
+      let parent = null;
+      
+      // ✅ Agar parentId ObjectId formatida bo'lsa (_id), parentni _id orqali topish
+      if (mongoose.Types.ObjectId.isValid(parentId)) {
+        parent = await Parent.findById(parentId);
+      }
+      
+      // ✅ Agar topilmagan yoki ObjectId emas bo'lsa, id field'i orqali qidirish
+      if (!parent) {
+        parent = await Parent.findOne({ id: parentId });
+      }
+      
       if (!parent) {
         return res.status(404).json({
           success: false,
           error: 'Parent not found'
         });
       }
+      
+      // ✅ Student modelida parentId String type, shuning uchun parent.id ni saqlash
+      req.body.parentId = parent.id;
     }
 
     // Check if username already exists
@@ -282,14 +296,30 @@ exports.updateStudent = async (req, res, next) => {
       }
     }
 
+    // ✅ parentId ni tekshirish va convert qilish (agar _id bo'lsa, parent.id ga)
+    let resolvedParentId = parentId;
     if (parentId) {
-      const parent = await Parent.findOne({ id: parentId });
+      let parent = null;
+      
+      // ✅ Agar parentId ObjectId formatida bo'lsa (_id), parentni _id orqali topish
+      if (mongoose.Types.ObjectId.isValid(parentId)) {
+        parent = await Parent.findById(parentId);
+      }
+      
+      // ✅ Agar topilmagan yoki ObjectId emas bo'lsa, id field'i orqali qidirish
+      if (!parent) {
+        parent = await Parent.findOne({ id: parentId });
+      }
+      
       if (!parent) {
         return res.status(404).json({
           success: false,
           error: 'Parent not found'
         });
       }
+      
+      // ✅ Student modelida parentId String type, shuning uchun parent.id ni saqlash
+      resolvedParentId = parent.id;
     }
 
     // Check for duplicate username
@@ -332,7 +362,7 @@ exports.updateStudent = async (req, res, next) => {
       sex,
       gradeId,
       classId,
-      parentId
+      parentId: resolvedParentId
     };
 
     // Remove undefined fields

@@ -14,11 +14,11 @@ const { validateAnnouncement, validateAnnouncementUpdate } = require('../middlew
 
 // Added to all routes that require authentication
 router.route('/')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAllAnnouncements)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAllAnnouncements)
   .post(protect, authorize('admin', 'teacher'), validateAnnouncement, createAnnouncement);
 
 router.route('/:id')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAnnouncement)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAnnouncement)
   .put(protect, authorize('admin', 'teacher'), validateAnnouncementUpdate, updateAnnouncement)
   .delete(protect, authorize('admin', 'teacher'), deleteAnnouncement);
 

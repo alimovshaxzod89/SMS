@@ -73,6 +73,7 @@ export const menuItemsConfig = [
         visible: ["admin", "teacher"],
         paths: {
           admin: "admin/parents",
+          teacher: "teacher/parents",
         },
       },
       {

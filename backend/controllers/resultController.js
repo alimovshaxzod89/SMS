@@ -3,6 +3,7 @@ const Result = require('../models/Result');
 const Exam = require('../models/Exam');
 const Assignment = require('../models/Assignment');
 const Student = require('../models/Student');
+const Parent = require('../models/Parent');
 const Lesson = require('../models/Lesson');
 const Teacher = require('../models/Teacher');
 const Subject = require('../models/Subject');
@@ -231,11 +232,74 @@ exports.createResult = async (req, res, next) => {
 exports.getAllResults = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, studentId, examId, assignmentId, classId, teacherId, search } = req.query;
+    const userRole = req.user.role;
     
     let query = {};
     
-    // Filter by studentId
-    if (studentId) {
+    // ✅ Student rol uchun: faqat o'z studentId'siga tegishli results
+    if (userRole === 'student') {
+      // req.user'da _id yoki id mavjud bo'lishi kerak
+      const currentStudentId = req.user._id || req.user.id;
+      
+      if (!currentStudentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Student ID not found in token'
+        });
+      }
+      
+      // ObjectId yoki String formatida bo'lishi mumkin
+      if (mongoose.Types.ObjectId.isValid(currentStudentId)) {
+        query.studentId = currentStudentId;
+      } else {
+        // Agar String id bo'lsa, Student'ni topib, _id'ni olish
+        const student = await Student.findOne({ id: currentStudentId }).select('_id').lean();
+        if (!student) {
+          return res.status(400).json({
+            success: false,
+            error: 'Student not found'
+          });
+        }
+        query.studentId = student._id;
+      }
+    }
+    
+    // ✅ Parent rol uchun: farzandlarining studentId'lariga tegishli results
+    if (userRole === 'parent') {
+      const students = await Student.find({ parentId: req.user.id })
+        .select('_id id')
+        .lean();
+      
+      if (students.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          totalPages: 0,
+          currentPage: parseInt(page),
+          data: []
+        });
+      }
+      
+      // Barcha farzandlarining studentId'larini olish
+      const studentIds = students
+        .map(s => s._id)
+        .filter(id => id && mongoose.Types.ObjectId.isValid(id));
+      
+      if (studentIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          totalPages: 0,
+          currentPage: parseInt(page),
+          data: []
+        });
+      }
+      
+      query.studentId = { $in: studentIds };
+    }
+    
+    // Filter by studentId (admin/teacher uchun query parametrdan)
+    if (studentId && (userRole === 'admin' || userRole === 'teacher')) {
       if (!mongoose.Types.ObjectId.isValid(studentId)) {
         return res.status(400).json({
           success: false,
@@ -642,6 +706,8 @@ exports.getResult = async (req, res, next) => {
       });
     }
 
+    const userRole = req.user.role;
+
     const result = await Result.findById(req.params.id)
       .populate('examId')
       .populate('assignmentId')
@@ -652,6 +718,74 @@ exports.getResult = async (req, res, next) => {
         success: false,
         error: 'Result not found'
       });
+    }
+
+    // ✅ Student rol uchun: result o'z studentId'siga tegishli ekanligini tekshirish
+    if (userRole === 'student') {
+      const currentStudentId = req.user._id || req.user.id;
+      
+      if (!currentStudentId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Student ID not found in token'
+        });
+      }
+      
+      // Result'ning studentId'si bilan taqqoslash
+      const resultStudentId = result.studentId 
+        ? (result.studentId._id ? result.studentId._id.toString() : result.studentId.toString())
+        : null;
+      
+      let currentStudentIdStr = null;
+      if (mongoose.Types.ObjectId.isValid(currentStudentId)) {
+        currentStudentIdStr = currentStudentId.toString();
+      } else {
+        // Agar String id bo'lsa, Student'ni topib, _id'ni olish
+        const student = await Student.findOne({ id: currentStudentId }).select('_id').lean();
+        if (!student) {
+          return res.status(403).json({
+            success: false,
+            error: 'Student not found'
+          });
+        }
+        currentStudentIdStr = student._id.toString();
+      }
+      
+      if (!resultStudentId || resultStudentId !== currentStudentIdStr) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this result'
+        });
+      }
+    }
+    
+    // ✅ Parent rol uchun: result farzandlarining studentId'laridan biriga tegishli ekanligini tekshirish
+    if (userRole === 'parent') {
+      if (!result.studentId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this result'
+        });
+      }
+      
+      const resultStudentId = result.studentId._id 
+        ? result.studentId._id.toString() 
+        : result.studentId.toString();
+      
+      const students = await Student.find({ parentId: req.user.id })
+        .select('_id')
+        .lean();
+      
+      const studentIds = students
+        .map(s => s._id ? s._id.toString() : null)
+        .filter(id => id);
+      
+      if (!studentIds.includes(resultStudentId)) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this result'
+        });
+      }
     }
 
     // Populate student - backward compatibility: support both ObjectId and String (id field)

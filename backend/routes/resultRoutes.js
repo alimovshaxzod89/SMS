@@ -14,11 +14,11 @@ const { validateResult, validateResultUpdate } = require('../middleware/validato
 
 // Added to all routes that require authentication
 router.route('/')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAllResults)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAllResults)
   .post(protect, authorize('admin', 'teacher'), validateResult, createResult);
 
 router.route('/:id')
-  .get(protect, authorize('admin', 'teacher', 'student'), getResult)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getResult)
   .put(protect, authorize('admin', 'teacher'), validateResultUpdate, updateResult)
   .delete(protect, authorize('admin', 'teacher'), deleteResult);
 

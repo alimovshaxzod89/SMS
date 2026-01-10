@@ -13,11 +13,11 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Added to all routes that require authentication
 router.route('/')
-  .get(protect, authorize('admin', 'teacher'), getAllExams)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAllExams)
   .post(protect, authorize('admin'), createExam);
 
 router.route('/:id')
-  .get(protect,authorize('admin', 'teacher'), getExam)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getExam)
   .put(protect, authorize('admin'), updateExam)
   .delete(protect, authorize('admin'), deleteExam);
 

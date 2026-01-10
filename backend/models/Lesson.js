@@ -21,18 +21,18 @@ const lessonSchema = new mongoose.Schema({
   },
   day: {
     type: String,
-    required: true,
+    required: false,
     enum: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'],
     uppercase: true
   },
   startTime: {
     type: String,
-    required: true,
+    required: false,
     match: [/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Please provide a valid time format (HH:MM)']
   },
   endTime: {
     type: String,
-    required: true,
+    required: false,
     match: [/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Please provide a valid time format (HH:MM)']
   }
 }, {

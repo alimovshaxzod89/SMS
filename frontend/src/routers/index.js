@@ -150,6 +150,36 @@ export const router = createRouter({
               component: () =>
                 import("@/pages/dashboard/Student/StudentDashboard.vue"),
             },
+            {
+              path: "exams",
+              name: "StudentExams",
+              component: () =>
+                import("@/pages/dashboard/Student/exams/Exams.vue"),
+            },
+            {
+              path: "assignments",
+              name: "StudentAssignments",
+              component: () =>
+                import("@/pages/dashboard/Student/assignments/Assignments.vue"),
+            },
+            {
+              path: "results",
+              name: "StudentResults",
+              component: () =>
+                import("@/pages/dashboard/Student/results/Results.vue"),
+            },
+            {
+              path: "events",
+              name: "StudentEvents",
+              component: () =>
+                import("@/pages/dashboard/Student/events/Events.vue"),
+            },
+            {
+              path: "announcements",
+              name: "StudentAnnouncements",
+              component: () =>
+                import("@/pages/dashboard/Student/announcements/Announcements.vue"),
+            },
           ],
         },
         {
@@ -171,9 +201,68 @@ export const router = createRouter({
               component: () =>
                 import("@/pages/dashboard/Teacher/teachers/Teachers.vue"),
             },
+            {
+              path: "students",
+              name: "TeacherStudents",
+              component: () =>
+                import("@/pages/dashboard/Teacher/students/Students.vue"),
+            },
+            {
+              path: "parents",
+              name: "TeacherParents",
+              component: () =>
+                import("@/pages/dashboard/Teacher/parents/Parents.vue"),
+            },
+            {
+              path: "classes",
+              name: "TeacherClasses",
+              component: () =>
+                import("@/pages/dashboard/Teacher/classes/Classes.vue"),
+            },
+            {
+              path: "lessons",
+              name: "TeacherLessons",
+              component: () =>
+                import("@/pages/dashboard/Teacher/lessons/Lessons.vue"),
+            },
+            {
+              path: "exams",
+              name: "TeacherExams",
+              component: () =>
+                import("@/pages/dashboard/Teacher/exams/Exams.vue"),
+            },
+            {
+              path: "assignments",
+              name: "TeacherAssignments",
+              component: () =>
+                import("@/pages/dashboard/Teacher/assignments/Assignments.vue"),
+            },
+            {
+              path: "results",
+              name: "TeacherResults",
+              component: () =>
+                import("@/pages/dashboard/Teacher/results/Results.vue"),
+            },
+            {
+              path: "events",
+              name: "TeacherEvents",
+              component: () =>
+                import("@/pages/dashboard/Teacher/events/Events.vue"),
+            },
+            {
+              path: "messages",
+              name: "TeacherMessages",
+                component: () =>
+                  import("@/pages/dashboard/Teacher/messages/Messages.vue"),
+            },
+            {
+              path: "announcements",
+              name: "TeacherAnnouncements",
+              component: () =>
+                import("@/pages/dashboard/Teacher/announcements/Announcements.vue"),
+            },
           ],
         },
-
         {
           path: "parent",
           name: "ParentView",
@@ -186,6 +275,36 @@ export const router = createRouter({
               name: "ParentDashboard",
               component: () =>
                 import("@/pages/dashboard/Parent/ParentDashboard.vue"),
+            },
+            {
+              path: "exams",
+              name: "ParentExams",
+              component: () =>
+                import("@/pages/dashboard/Parent/exams/Exams.vue"),
+            },
+            {
+              path: "assignments",
+              name: "ParentAssignments",
+              component: () =>
+                import("@/pages/dashboard/Parent/assignments/Assignments.vue"),
+            },
+            {
+              path: "results",
+              name: "ParentResults",
+              component: () =>
+                import("@/pages/dashboard/Parent/results/Results.vue"),
+            },
+            {
+              path: "events",
+              name: "ParentEvents",
+              component: () =>
+                import("@/pages/dashboard/Parent/events/Events.vue"),
+            },
+            {
+              path: "announcements",
+              name: "ParentAnnouncements",
+              component: () =>
+                import("@/pages/dashboard/Parent/announcements/Announcements.vue"),
             },
           ],
         },

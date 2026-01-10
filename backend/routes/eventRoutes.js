@@ -14,11 +14,11 @@ const { validateEvent, validateEventUpdate } = require('../middleware/validators
 
 // Added to all routes that require authentication
 router.route('/')
-  .get(protect, authorize('admin', 'teacher', 'student'), getAllEvents)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getAllEvents)
   .post(protect, authorize('admin', 'teacher'), validateEvent, createEvent);
 
 router.route('/:id')
-  .get(protect, authorize('admin', 'teacher', 'student'), getEvent)
+  .get(protect, authorize('admin', 'teacher', 'student', 'parent'), getEvent)
   .put(protect, authorize('admin', 'teacher'), validateEventUpdate, updateEvent)
   .delete(protect, authorize('admin', 'teacher'), deleteEvent);
 

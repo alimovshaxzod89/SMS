@@ -3,6 +3,8 @@ const Assignment = require('../models/Assignment');
 const Lesson = require('../models/Lesson');
 const Teacher = require('../models/Teacher');
 const Subject = require('../models/Subject');
+const Student = require('../models/Student');
+const Parent = require('../models/Parent');
 
 // Create Assignment
 exports.createAssignment = async (req, res, next) => {
@@ -104,6 +106,7 @@ exports.createAssignment = async (req, res, next) => {
 exports.getAllAssignments = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, search, classId, teacherId, lessonId } = req.query;
+    const userRole = req.user.role;
     
     let query = {};
     let filteredLessonIds = null;
@@ -111,8 +114,82 @@ exports.getAllAssignments = async (req, res, next) => {
     // Step 1: Build lesson query for filtering (classId, teacherId)
     let lessonQuery = {};
     
-    // Validate ObjectIds for classId
-    if (classId) {
+    // ✅ Student rol uchun: faqat o'z classId'siga tegishli assignments
+    if (userRole === 'student') {
+      // req.user'da classId mavjud bo'lishi kerak (auth middleware'da student yuklangan)
+      if (!req.user.classId) {
+        // Agar classId mavjud bo'lmasa, student'ni qaytadan yuklash
+        const student = await Student.findOne({ 
+          $or: [
+            { _id: req.user._id },
+            { id: req.user.id || req.user._id }
+          ]
+        }).select('classId').lean();
+        
+        if (!student || !student.classId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Student class information not found'
+          });
+        }
+        
+        req.user.classId = student.classId;
+      }
+      
+      // classId ObjectId yoki string formatida bo'lishi mumkin
+      const studentClassId = req.user.classId._id 
+        ? req.user.classId._id.toString() 
+        : req.user.classId.toString();
+      
+      if (!mongoose.Types.ObjectId.isValid(studentClassId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid student class ID'
+        });
+      }
+      
+      lessonQuery.classId = studentClassId;
+    }
+    
+    // ✅ Parent rol uchun: farzandlarining classId'lariga tegishli assignments
+    if (userRole === 'parent') {
+      const students = await Student.find({ parentId: req.user.id })
+        .select('classId')
+        .lean();
+      
+      if (students.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          totalPages: 0,
+          currentPage: parseInt(page),
+          data: []
+        });
+      }
+      
+      // Barcha farzandlarining classId'larini olish
+      const studentClassIds = students
+        .map(s => {
+          if (!s.classId) return null;
+          return s.classId._id ? s.classId._id.toString() : s.classId.toString();
+        })
+        .filter(id => id && mongoose.Types.ObjectId.isValid(id));
+      
+      if (studentClassIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          totalPages: 0,
+          currentPage: parseInt(page),
+          data: []
+        });
+      }
+      
+      lessonQuery.classId = { $in: studentClassIds };
+    }
+    
+    // Validate ObjectIds for classId (admin/teacher uchun query parametrdan)
+    if (classId && (userRole === 'admin' || userRole === 'teacher')) {
       if (!mongoose.Types.ObjectId.isValid(classId)) {
         return res.status(400).json({
           success: false,
@@ -122,8 +199,8 @@ exports.getAllAssignments = async (req, res, next) => {
       lessonQuery.classId = classId;
     }
     
-    // teacherId is String type, not ObjectId
-    if (teacherId) {
+    // teacherId is String type, not ObjectId (admin/teacher uchun)
+    if (teacherId && (userRole === 'admin' || userRole === 'teacher')) {
       lessonQuery.teacherId = teacherId;
     }
 
@@ -308,7 +385,9 @@ exports.getAssignment = async (req, res, next) => {
       });
     }
 
-    // Populate without teacherId
+    const userRole = req.user.role;
+    
+    // ✅ Assignment ni topish
     const assignment = await Assignment.findById(req.params.id)
       .populate({
         path: 'lessonId',
@@ -324,6 +403,82 @@ exports.getAssignment = async (req, res, next) => {
         success: false,
         error: 'Assignment not found'
       });
+    }
+
+    // ✅ Student rol uchun: assignment o'z classId'siga tegishli ekanligini tekshirish
+    if (userRole === 'student') {
+      if (!assignment.lessonId || !assignment.lessonId.classId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this assignment'
+        });
+      }
+      
+      // Student'ning classId'sini olish
+      if (!req.user.classId) {
+        const student = await Student.findOne({ 
+          $or: [
+            { _id: req.user._id },
+            { id: req.user.id || req.user._id }
+          ]
+        }).select('classId').lean();
+        
+        if (!student || !student.classId) {
+          return res.status(403).json({
+            success: false,
+            error: 'Student class information not found'
+          });
+        }
+        
+        req.user.classId = student.classId;
+      }
+      
+      const assignmentClassId = assignment.lessonId.classId._id 
+        ? assignment.lessonId.classId._id.toString() 
+        : assignment.lessonId.classId.toString();
+      
+      const studentClassId = req.user.classId._id 
+        ? req.user.classId._id.toString() 
+        : req.user.classId.toString();
+      
+      if (assignmentClassId !== studentClassId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this assignment'
+        });
+      }
+    }
+    
+    // ✅ Parent rol uchun: assignment farzandlarining classId'laridan biriga tegishli ekanligini tekshirish
+    if (userRole === 'parent') {
+      if (!assignment.lessonId || !assignment.lessonId.classId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this assignment'
+        });
+      }
+      
+      const assignmentClassId = assignment.lessonId.classId._id 
+        ? assignment.lessonId.classId._id.toString() 
+        : assignment.lessonId.classId.toString();
+      
+      const students = await Student.find({ parentId: req.user.id })
+        .select('classId')
+        .lean();
+      
+      const studentClassIds = students
+        .map(s => {
+          if (!s.classId) return null;
+          return s.classId._id ? s.classId._id.toString() : s.classId.toString();
+        })
+        .filter(id => id);
+      
+      if (!studentClassIds.includes(assignmentClassId)) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to access this assignment'
+        });
+      }
     }
 
     // Manual populate teacher ma'lumotlari
