@@ -1,6 +1,34 @@
 const mongoose = require('mongoose');
 const Announcement = require('../models/Announcement');
 const Class = require('../models/Class');
+const Lesson = require('../models/Lesson');
+
+// ✅ Helper function to get teacher's related class IDs (as ObjectIds)
+const getTeacherRelatedClassIds = async (teacherId) => {
+  // 1. Teacher'ning supervisor bo'lgan class'larni topish
+  const supervisedClasses = await Class.find({ supervisorId: teacherId })
+    .select('_id')
+    .lean();
+  const supervisedClassIds = supervisedClasses.map(cls => cls._id);
+
+  // 2. Teacher'ning dars berayotgan class'larni topish (Lesson orqali)
+  const teacherLessons = await Lesson.find({ teacherId: teacherId })
+    .select('classId')
+    .lean();
+  const lessonClassIds = teacherLessons.map(lesson => lesson.classId);
+
+  // 3. Barcha tegishli class ID'larni birlashtirish (unique qilish)
+  // ObjectId'larni string'ga convert qilib, keyin yana ObjectId'ga convert qilamiz
+  const uniqueClassIdStrings = [...new Set([
+    ...supervisedClassIds.map(id => id.toString()),
+    ...lessonClassIds.map(id => id.toString())
+  ])];
+  
+  // ObjectId formatiga qaytarish
+  return uniqueClassIdStrings
+    .filter(id => mongoose.Types.ObjectId.isValid(id))
+    .map(id => new mongoose.Types.ObjectId(id));
+};
 
 // Create Announcement
 exports.createAnnouncement = async (req, res, next) => {
@@ -107,15 +135,38 @@ exports.getAllAnnouncements = async (req, res, next) => {
     
     let query = {};
     
-    // Filter by classId
-    if (classId) {
-      if (!mongoose.Types.ObjectId.isValid(classId)) {
+    // ✅ Teacher role'da bo'lsa, announcement'larni filter qilish
+    if (req.user.role === 'teacher') {
+      const teacherId = req.user.id || req.user._id?.toString();
+      
+      if (!teacherId) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid class ID format'
+          error: 'Teacher ID not found'
         });
       }
-      query.classId = classId;
+
+      // Teacher'ga tegishli class ID'larni olish
+      const relatedClassIds = await getTeacherRelatedClassIds(teacherId);
+
+      // Announcement filter: 
+      // 1. classId null bo'lgan announcement'lar (barcha teacherlar uchun)
+      // 2. classId teacher'ga tegishli bo'lgan announcement'lar
+      query.$or = [
+        { classId: null }, // classId bo'lmagan announcement'lar - barcha teacherlar uchun
+        { classId: { $in: relatedClassIds } } // Teacher'ga tegishli class'lardagi announcement'lar
+      ];
+    } else {
+      // Admin va boshqa rollar uchun - classId filter (query parametrdan)
+      if (classId) {
+        if (!mongoose.Types.ObjectId.isValid(classId)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid class ID format'
+          });
+        }
+        query.classId = classId;
+      }
     }
 
     // Filter by date range
@@ -152,10 +203,21 @@ exports.getAllAnnouncements = async (req, res, next) => {
     // Search by title or description
     if (search && typeof search === 'string') {
       const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.$or = [
+      const searchOr = [
         { title: { $regex: sanitizedSearch, $options: 'i' } },
         { description: { $regex: sanitizedSearch, $options: 'i' } }
       ];
+
+      // Agar teacher filter ($or) mavjud bo'lsa, $and bilan birlashtirish
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: searchOr }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = searchOr;
+      }
     }
 
     // Validate and sanitize pagination
@@ -205,6 +267,36 @@ exports.getAnnouncement = async (req, res, next) => {
         success: false,
         error: 'Announcement not found'
       });
+    }
+
+    // ✅ Teacher role'da bo'lsa, announcement'ga access tekshirish
+    if (req.user.role === 'teacher') {
+      const teacherId = req.user.id || req.user._id?.toString();
+      
+      if (!teacherId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Teacher ID not found'
+        });
+      }
+
+      // Agar announcement'da classId bo'lsa, teacher'ga tegishli ekanligini tekshirish
+      if (announcement.classId) {
+        const announcementClassId = announcement.classId._id?.toString() || announcement.classId.toString();
+        
+        // Teacher'ga tegishli class ID'larni olish
+        const relatedClassIds = await getTeacherRelatedClassIds(teacherId);
+        const relatedClassIdStrings = relatedClassIds.map(id => id.toString());
+
+        // Agar announcement'ning classId'si teacher'ga tegishli bo'lmasa, access denied
+        if (!relatedClassIdStrings.includes(announcementClassId)) {
+          return res.status(403).json({
+            success: false,
+            error: 'You do not have access to this announcement'
+          });
+        }
+      }
+      // Agar announcement'da classId bo'lmasa (null), barcha teacherlar ko'ra oladi - hech narsa qilmaymiz
     }
 
     res.status(200).json({
