@@ -211,52 +211,62 @@ const handlePressEnter = () => {};
 
 // 10. Computed Properties
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left'
-  },
-  {
-    title: 'F.I.O.',
-    key: 'name',
-    dataIndex: 'name',
-    width: 300,
-    sorter: true,
-    ellipsis: true,
-    customRender: ({ record }) => `${record.name} ${record.surname}`
-  },
-  {
-    title: 'Talabalar',
-    key: 'students',
-    dataIndex: 'students',
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Telefon',
-    key: 'phone',
-    dataIndex: 'phone',
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Manzil',
-    key: 'address',
-    dataIndex: 'address',
-    ellipsis: true,
-    align: 'center'
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    align: 'center',
-    ellipsis: true
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left'
+    },
+    {
+      title: 'F.I.O.',
+      key: 'name',
+      dataIndex: 'name',
+      width: 300,
+      sorter: true,
+      ellipsis: true,
+      customRender: ({ record }) => `${record.name} ${record.surname}`
+    },
+    {
+      title: 'Talabalar',
+      key: 'students',
+      dataIndex: 'students',
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Telefon',
+      key: 'phone',
+      dataIndex: 'phone',
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Manzil',
+      key: 'address',
+      dataIndex: 'address',
+      ellipsis: true,
+      align: 'center'
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageParents = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageParents) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      align: 'center',
+      ellipsis: true
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan ota-onalar ro'yxati
 const formattedParents = computed(() => {

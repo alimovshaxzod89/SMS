@@ -116,58 +116,68 @@ const { searchValue } = useSearch({
 
 // 10. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left'
-  },
-  {
-    title: 'Fan',
-    key: 'subject',
-    dataIndex: 'subject',
-    sorter: true,
-    ellipsis: true,
-  },
-  {
-    title: 'Sinf',
-    key: 'class',
-    dataIndex: 'class',
-    sorter: true,
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'O\'qituvchi',
-    key: 'teacher',
-    dataIndex: 'teacher',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Kun',
-    key: 'day',
-    dataIndex: 'day',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Vaqt',
-    key: 'time',
-    dataIndex: 'time',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    fixed: 'right',
-    align: 'center'
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left'
+    },
+    {
+      title: 'Fan',
+      key: 'subject',
+      dataIndex: 'subject',
+      sorter: true,
+      ellipsis: true,
+    },
+    {
+      title: 'Sinf',
+      key: 'class',
+      dataIndex: 'class',
+      sorter: true,
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'O\'qituvchi',
+      key: 'teacher',
+      dataIndex: 'teacher',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Kun',
+      key: 'day',
+      dataIndex: 'day',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Vaqt',
+      key: 'time',
+      dataIndex: 'time',
+      align: 'center',
+      ellipsis: true,
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageLessons = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageLessons) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      fixed: 'right',
+      align: 'center'
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan darslar ro'yxati
 const formattedLessons = computed(() => {

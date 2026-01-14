@@ -15,8 +15,8 @@
   
   // Permissions for Event
   const eventPermissions = {
-    canEdit: false,
-    canDelete: false,
+    canEdit: true,
+    canDelete: true,
     canView: true,
   };
   

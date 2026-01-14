@@ -15,8 +15,8 @@
   
   // Permissions for Result
   const resultPermissions = {
-    canEdit: false,
-    canDelete: false,
+    canEdit: true,
+    canDelete: true,
     canView: true,
   };
   

@@ -120,65 +120,75 @@ const handlePressEnter = () => {
 };
 
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left' // Agar boshqa columnlar fixed bo'lmasa
-  },
-  {
-    title: 'Rasm',
-    key: 'photo',
-    dataIndex: 'photo',
-    width: 80,
-    align: 'center'
-  },
-  {
-    title: 'F.I.O.',
-    key: 'name',
-    dataIndex: 'name',
-    sorter: true,
-    align: 'center',
-    ellipsis: true,
-    customRender: ({ record }) => `${record.name} ${record.surname}`
-  },
-  {
-    title: 'Darajasi',
-    key: 'gradeId',
-    dataIndex: 'gradeId',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Sinf',
-    key: 'classId',
-    dataIndex: 'classId',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Telefon',
-    key: 'phone',
-    dataIndex: 'phone',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Manzil',
-    key: 'address',
-    dataIndex: 'address',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    align: 'center'
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left' // Agar boshqa columnlar fixed bo'lmasa
+    },
+    {
+      title: 'Rasm',
+      key: 'photo',
+      dataIndex: 'photo',
+      width: 80,
+      align: 'center'
+    },
+    {
+      title: 'F.I.O.',
+      key: 'name',
+      dataIndex: 'name',
+      sorter: true,
+      align: 'center',
+      ellipsis: true,
+      customRender: ({ record }) => `${record.name} ${record.surname}`
+    },
+    {
+      title: 'Darajasi',
+      key: 'gradeId',
+      dataIndex: 'gradeId',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Sinf',
+      key: 'classId',
+      dataIndex: 'classId',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Telefon',
+      key: 'phone',
+      dataIndex: 'phone',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Manzil',
+      key: 'address',
+      dataIndex: 'address',
+      align: 'center',
+      ellipsis: true,
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageStudents = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageStudents) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      align: 'center'
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan talabalar ro'yxati
 const formattedStudents = computed(() => {

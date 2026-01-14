@@ -114,66 +114,76 @@ const { searchValue } = useSearch({
 
 // 9. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left'
-  },
-  {
-    title: 'Fan',
-    key: 'subject',
-    dataIndex: 'subject',
-    sorter: true,
-    ellipsis: true
-  },
-  {
-    title: "O'quvchi",
-    key: 'student',
-    dataIndex: 'student',
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Ball',
-    key: 'score',
-    dataIndex: 'score',
-    sorter: true,
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: "O'qituvchi",
-    key: 'teacher',
-    dataIndex: 'teacher',
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Sinf',
-    key: 'class',
-    dataIndex: 'class',
-    sorter: true,
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Sana',
-    key: 'date',
-    dataIndex: 'date',
-    sorter: true,
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    align: 'center',
-    ellipsis: true
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left'
+    },
+    {
+      title: 'Fan',
+      key: 'subject',
+      dataIndex: 'subject',
+      sorter: true,
+      ellipsis: true
+    },
+    {
+      title: "O'quvchi",
+      key: 'student',
+      dataIndex: 'student',
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Ball',
+      key: 'score',
+      dataIndex: 'score',
+      sorter: true,
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: "O'qituvchi",
+      key: 'teacher',
+      dataIndex: 'teacher',
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Sinf',
+      key: 'class',
+      dataIndex: 'class',
+      sorter: true,
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Sana',
+      key: 'date',
+      dataIndex: 'date',
+      sorter: true,
+      align: 'center',
+      ellipsis: true
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageResults = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageResults) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      align: 'center',
+      ellipsis: true
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan natijalar ro'yxati
 const formattedResults = computed(() => {

@@ -15,8 +15,8 @@
   
   // Permissions for Exam
   const examPermissions = {
-    canEdit: false,
-    canDelete: false,
+    canEdit: true,
+    canDelete: true,
     canView: true,
   };
   

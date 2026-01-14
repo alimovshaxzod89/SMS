@@ -113,67 +113,77 @@ const { searchValue } = useSearch({
 
 // 9. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left'
-  },
-  {
-    title: 'Sinf',
-    key: 'name',
-    dataIndex: 'name',
-    sorter: true,
-    width: 200,
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Sig\'im',
-    key: 'capacity',
-    dataIndex: 'capacity',
-    width: 150,
-    align: 'center',
-    ellipsis: true
-  },
-  {
-    title: 'Daraja',
-    key: 'grade',
-    dataIndex: 'grade',
-    width: 150,
-    align: 'center',
-    ellipsis: true,
-    customRender: ({ record }) => {
-      if (record.gradeId && typeof record.gradeId === 'object' && record.gradeId.level) {
-        return record.gradeId.level;
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left'
+    },
+    {
+      title: 'Sinf',
+      key: 'name',
+      dataIndex: 'name',
+      sorter: true,
+      width: 200,
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Sig\'im',
+      key: 'capacity',
+      dataIndex: 'capacity',
+      width: 150,
+      align: 'center',
+      ellipsis: true
+    },
+    {
+      title: 'Daraja',
+      key: 'grade',
+      dataIndex: 'grade',
+      width: 150,
+      align: 'center',
+      ellipsis: true,
+      customRender: ({ record }) => {
+        if (record.gradeId && typeof record.gradeId === 'object' && record.gradeId.level) {
+          return record.gradeId.level;
+        }
+        return record.gradeId || '-';
       }
-      return record.gradeId || '-';
-    }
-  },
-  {
-    title: 'Supervisor (O\'qituvchi)',
-    key: 'supervisor',
-    dataIndex: 'supervisor',
-    width: 250,
-    align: 'center',
-    ellipsis: true,
-    customRender: ({ record }) => {
-      if (record.supervisorId && typeof record.supervisorId === 'object') {
-        return `${record.supervisorId.name || ''} ${record.supervisorId.surname || ''}`.trim() || '-';
+    },
+    {
+      title: 'Supervisor (O\'qituvchi)',
+      key: 'supervisor',
+      dataIndex: 'supervisor',
+      width: 250,
+      align: 'center',
+      ellipsis: true,
+      customRender: ({ record }) => {
+        if (record.supervisorId && typeof record.supervisorId === 'object') {
+          return `${record.supervisorId.name || ''} ${record.supervisorId.surname || ''}`.trim() || '-';
+        }
+        return '-';
       }
-      return '-';
-    }
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    fixed: 'right',
-    align: 'center'
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageClasses = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageClasses) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      fixed: 'right',
+      align: 'center'
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan sinflar ro'yxati
 const formattedClasses = computed(() => {

@@ -135,6 +135,18 @@ export const router = createRouter({
                   "@/pages/dashboard/Admin/announcements/Announcements.vue"
                 ),
             },
+            {
+              path: "messages",
+              name: "AdminMessages",
+              component: () =>
+                import("@/pages/dashboard/Admin/messages/Messages.vue"),
+            },
+            {
+              path: "attendance",
+              name: "AdminAttendance",
+              component: () =>
+                import("@/pages/dashboard/Admin/attendance/Attendance.vue"),
+            },
           ],
         },
         {
@@ -179,6 +191,18 @@ export const router = createRouter({
               name: "StudentAnnouncements",
               component: () =>
                 import("@/pages/dashboard/Student/announcements/Announcements.vue"),
+            },
+            {
+              path: "messages",
+              name: "StudentMessages",
+              component: () =>
+                import("@/pages/dashboard/Student/messages/Messages.vue"),
+            },
+            {
+              path: "attendance",
+              name: "StudentAttendance",
+              component: () =>
+                import("@/pages/dashboard/Student/attendance/Attendance.vue"),
             },
           ],
         },
@@ -256,6 +280,12 @@ export const router = createRouter({
                   import("@/pages/dashboard/Teacher/messages/Messages.vue"),
             },
             {
+              path: "attendance",
+              name: "TeacherAttendance",
+              component: () =>
+                import("@/pages/dashboard/Teacher/attendance/Attendance.vue"),
+            },
+            {
               path: "announcements",
               name: "TeacherAnnouncements",
               component: () =>
@@ -305,6 +335,18 @@ export const router = createRouter({
               name: "ParentAnnouncements",
               component: () =>
                 import("@/pages/dashboard/Parent/announcements/Announcements.vue"),
+            },
+            {
+              path: "messages",
+              name: "ParentMessages",
+              component: () =>
+                import("@/pages/dashboard/Parent/messages/Messages.vue"),
+            },
+            {
+              path: "attendance",
+              name: "ParentAttendance",
+              component: () =>
+                import("@/pages/dashboard/Parent/attendance/Attendance.vue"),
             },
           ],
         },

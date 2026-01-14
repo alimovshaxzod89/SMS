@@ -116,60 +116,70 @@ const { searchValue } = useSearch({
 
 // 9. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left'
-  },
-  {
-    title: 'Fan',
-    key: 'subject',
-    dataIndex: 'subject',
-    sorter: true,
-    ellipsis: true,
-  },
-  {
-    title: 'Sinf',
-    key: 'class',
-    dataIndex: 'class',
-    sorter: true,
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Mavzu',
-    key: 'title',
-    dataIndex: 'title',
-    sorter: true,
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: "O'qituvchi",
-    key: 'teacher',
-    dataIndex: 'teacher',
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Tugash Muddati',
-    key: 'dueDate',
-    dataIndex: 'dueDate',
-    sorter: true,
-    align: 'center',
-    ellipsis: true,
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    fixed: 'right',
-    align: 'center',
-  },
-]);
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left'
+    },
+    {
+      title: 'Fan',
+      key: 'subject',
+      dataIndex: 'subject',
+      sorter: true,
+      ellipsis: true,
+    },
+    {
+      title: 'Sinf',
+      key: 'class',
+      dataIndex: 'class',
+      sorter: true,
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Mavzu',
+      key: 'title',
+      dataIndex: 'title',
+      sorter: true,
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: "O'qituvchi",
+      key: 'teacher',
+      dataIndex: 'teacher',
+      align: 'center',
+      ellipsis: true,
+    },
+    {
+      title: 'Tugash Muddati',
+      key: 'dueDate',
+      dataIndex: 'dueDate',
+      sorter: true,
+      align: 'center',
+      ellipsis: true,
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageAssignments = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageAssignments) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      fixed: 'right',
+      align: 'center',
+    });
+  }
+
+  return baseColumns;
+});
 
 // Formatlangan topshiriqlar ro'yxati
 const formattedAssignments = computed(() => {

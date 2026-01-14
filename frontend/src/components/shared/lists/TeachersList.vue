@@ -113,73 +113,83 @@ const { searchValue } = useSearch({
 
 // 9. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: '№',
-    key: 'number',
-    width: 60,
-    align: 'center',
-    fixed: 'left' // Agar boshqa columnlar fixed bo'lmasa
-  },
-  {
-    title: 'Rasm',
-    key: 'photo',
-    dataIndex: 'photo',
-    width: 80,
-    align: 'center'
-  },
-  {
-    title: 'F.I.O.',
-    key: 'name',
-    dataIndex: 'name',
-    sorter: true,
-    width: 200,
-    align: 'center',
-    customRender: ({ record }) => `${record.name} ${record.surname}`
-  },
-  {
-    title: 'Fanlar',
-    key: 'subjects',
-    dataIndex: 'subjects',
-    width: 250,
-    align: 'center',
-  },
-  {
-    title: 'Sinflar',
-    key: 'classes',
-    dataIndex: 'classes',
-    width: 250,
-    align: 'center',
-  },
-  // {
-  //   title: 'Email',
-  //   key: 'email',
-  //   dataIndex: 'email',
-  //   width: 200,
-  //   align: 'center'
-  // },
-  {
-    title: 'Telefon',
-    key: 'phone',
-    dataIndex: 'phone',
-    width: 150,
-    align: 'center'
-  },
-  {
-    title: 'Manzil',
-    key: 'address',
-    dataIndex: 'address',
-    ellipsis: true,
-    align: 'center'
-  },
-  {
-    title: 'Amallar',
-    key: 'action',
-    width: 150,
-    fixed: 'right',
-    align: 'center'
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '№',
+      key: 'number',
+      width: 60,
+      align: 'center',
+      fixed: 'left' // Agar boshqa columnlar fixed bo'lmasa
+    },
+    {
+      title: 'Rasm',
+      key: 'photo',
+      dataIndex: 'photo',
+      width: 80,
+      align: 'center'
+    },
+    {
+      title: 'F.I.O.',
+      key: 'name',
+      dataIndex: 'name',
+      sorter: true,
+      width: 200,
+      align: 'center',
+      customRender: ({ record }) => `${record.name} ${record.surname}`
+    },
+    {
+      title: 'Fanlar',
+      key: 'subjects',
+      dataIndex: 'subjects',
+      width: 250,
+      align: 'center',
+    },
+    {
+      title: 'Sinflar',
+      key: 'classes',
+      dataIndex: 'classes',
+      width: 250,
+      align: 'center',
+    },
+    // {
+    //   title: 'Email',
+    //   key: 'email',
+    //   dataIndex: 'email',
+    //   width: 200,
+    //   align: 'center'
+    // },
+    {
+      title: 'Telefon',
+      key: 'phone',
+      dataIndex: 'phone',
+      width: 150,
+      align: 'center'
+    },
+    {
+      title: 'Manzil',
+      key: 'address',
+      dataIndex: 'address',
+      ellipsis: true,
+      align: 'center'
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageTeachers = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageTeachers) {
+    baseColumns.push({
+      title: 'Amallar',
+      key: 'action',
+      width: 150,
+      fixed: 'right',
+      align: 'center'
+    });
   }
-]);
+
+  return baseColumns;
+});
 
 // Formatlangan o'qituvchilar ro'yxati
 const formattedTeachers = computed(() => {

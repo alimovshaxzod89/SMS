@@ -17,7 +17,7 @@
   const assignmentPermissions = {
     canEdit: false,
     canDelete: false,
-    canView: true,
+    canView: false,
   };
   
   </script>

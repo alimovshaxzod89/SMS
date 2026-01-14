@@ -116,57 +116,66 @@ const { searchValue } = useSearch({
 
 // 10. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: "№",
-    key: "number",
-    width: 60,
-    align: "center",
-    fixed: "left",
-  },
-  {
-    title: "Nomi",
-    key: "title",
-    dataIndex: "title",
-    sorter: true,
-    ellipsis: true,
-  },
-  {
-    title: "Guruh",
-    key: "class",
-    dataIndex: "class",
-    align: "center",
-    ellipsis: true,
-  },
-  {
-    title: "Sana",
-    key: "date",
-    dataIndex: "date",
-    align: "center",
-    ellipsis: true,
-  },
-  {
-    title: "Boshlanish vaqti",
-    key: "startTime",
-    dataIndex: "startTime",
-    align: "center",
-    ellipsis: true,
-  },
-  {
-    title: "Tugash vaqti",
-    key: "endTime",
-    dataIndex: "endTime",
-    align: "center",
-    ellipsis: true,
-  },
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: "№",
+      key: "number",
+      width: 60,
+      align: "center",
+      fixed: "left",
+    },
+    {
+      title: "Nomi",
+      key: "title",
+      dataIndex: "title",
+      sorter: true,
+      ellipsis: true,
+    },
+    {
+      title: "Guruh",
+      key: "class",
+      dataIndex: "class",
+      align: "center",
+      ellipsis: true,
+    },
+    {
+      title: "Sana",
+      key: "date",
+      dataIndex: "date",
+      align: "center",
+      ellipsis: true,
+    },
+    {
+      title: "Boshlanish vaqti",
+      key: "startTime",
+      dataIndex: "startTime",
+      align: "center",
+      ellipsis: true,
+    },
+    {
+      title: "Tugash vaqti",
+      key: "endTime",
+      dataIndex: "endTime",
+      align: "center",
+      ellipsis: true,
+    },
+  ];
 
-  {
-    title: "Amallar",
-    key: "action",
-    align: "center",
-    ellipsis: true,
-  },
-]);
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageEvents = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageEvents) {
+    baseColumns.push({
+      title: "Amallar",
+      key: "action",
+      align: "center",
+      ellipsis: true,
+    });
+  }
+
+  return baseColumns;
+});
 
 // Formatlangan eventlar ro'yxati
 const formattedEvents = computed(() => {

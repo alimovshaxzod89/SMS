@@ -112,34 +112,44 @@ const { searchValue } = useSearch({
 
 // 9. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-    {
-        title: '№',
-        key: 'number',
-        width: 60,
-        align: 'center',
-        fixed: 'left'
-    },
-    {
-        title: 'Fan',
-        key: 'name',
-        dataIndex: 'name',
-        sorter: true,
-        ellipsis: true
-    },
-    {
-        title: "O'qituvchilar",
-        key: 'teachers',
-        dataIndex: 'teachers',
-        align: 'center',
-        ellipsis: true
-    },
-    {
-        title: 'Amallar',
-        key: 'action',
-        align: 'center'
+const tableColumns = computed(() => {
+    const baseColumns = [
+        {
+            title: '№',
+            key: 'number',
+            width: 60,
+            align: 'center',
+            fixed: 'left'
+        },
+        {
+            title: 'Fan',
+            key: 'name',
+            dataIndex: 'name',
+            sorter: true,
+            ellipsis: true
+        },
+        {
+            title: "O'qituvchilar",
+            key: 'teachers',
+            dataIndex: 'teachers',
+            align: 'center',
+            ellipsis: true
+        },
+    ];
+
+    // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+    const canManageSubjects = props.role === 'ADMIN' || props.role === 'TEACHER';
+    
+    if (canManageSubjects) {
+        baseColumns.push({
+            title: 'Amallar',
+            key: 'action',
+            align: 'center'
+        });
     }
-]);
+
+    return baseColumns;
+});
 
 const formattedSubjects = computed(() => {
     return subjectsStore.getSubjects.map((subject) => ({

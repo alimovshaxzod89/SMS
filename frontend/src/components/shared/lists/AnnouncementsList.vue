@@ -116,42 +116,52 @@ const { searchValue } = useSearch({
 
 // 10. Computed
 // Table columns konfiguratsiyasi
-const tableColumns = computed(() => [
-  {
-    title: "№",
-    key: "number",
-    width: 60,
-    align: "center",
-    fixed: "left",
-  },
-  {
-    title: "Sarlavha",
-    key: "title",
-    dataIndex: "title",
-    sorter: true,
-    ellipsis: true,
-  },
-  {
-    title: "Guruh",
-    key: "class",
-    dataIndex: "class",
-    align: "center",
-    ellipsis: true,
-  },
-  {
-    title: "Sana",
-    key: "date",
-    dataIndex: "date",
-    align: "center",
-    ellipsis: true,
-  },
-  {
-    title: "Amallar",
-    key: "action",
-    align: "center",
-    ellipsis: true,
-  },
-]);
+const tableColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: "№",
+      key: "number",
+      width: 60,
+      align: "center",
+      fixed: "left",
+    },
+    {
+      title: "Sarlavha",
+      key: "title",
+      dataIndex: "title",
+      sorter: true,
+      ellipsis: true,
+    },
+    {
+      title: "Guruh",
+      key: "class",
+      dataIndex: "class",
+      align: "center",
+      ellipsis: true,
+    },
+    {
+      title: "Sana",
+      key: "date",
+      dataIndex: "date",
+      align: "center",
+      ellipsis: true,
+    },
+  ];
+
+  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
+  const canManageAnnouncements = props.role === 'ADMIN' || props.role === 'TEACHER';
+  
+  if (canManageAnnouncements) {
+    baseColumns.push({
+      title: "Amallar",
+      key: "action",
+      align: "center",
+      ellipsis: true,
+    });
+  }
+
+  return baseColumns;
+});
 
 // Formatlangan e'lonlar ro'yxati
 const formattedAnnouncements = computed(() => {
