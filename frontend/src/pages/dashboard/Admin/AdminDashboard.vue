@@ -1,14 +1,14 @@
 <template>
   <div class="p-4">
     <!-- Welcome Alert -->
-    <a-alert
+    <!-- <a-alert
       message="Admin Dashboard"
       description="Markaz boshqaruv tizimiga xush kelibsiz. Umumiy statistika va ma'lumotlar."
       type="info"
       show-icon
       closable
       class="mb-4"
-    />
+    /> -->
 
     <!-- Main Content with Loading -->
     <a-spin :spinning="loading" tip="Yuklanmoqda...">
@@ -19,16 +19,16 @@
             <!-- User Statistics Cards -->
             <a-row :gutter="[16, 16]">
               <a-col :xs="24" :sm="12" :lg="6">
-                <UserCard type="student" :count="120" />
+                <UserCard type="admin" :count="userCounts.admin" />
               </a-col>
               <a-col :xs="24" :sm="12" :lg="6">
-                <UserCard type="teacher" :count="6" />
+                <UserCard type="student" :count="userCounts.student" />
               </a-col>
               <a-col :xs="24" :sm="12" :lg="6">
-                <UserCard type="parent" :count="120" />
+                <UserCard type="teacher" :count="userCounts.teacher" />
               </a-col>
               <a-col :xs="24" :sm="12" :lg="6">
-                <UserCard type="staff" :count="10" />
+                <UserCard type="parent" :count="userCounts.parent" />
               </a-col>
             </a-row>
 
@@ -64,16 +64,41 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted } from 'vue';
 import UserCard from '@/components/ui/cards/UserCard.vue';
 import CountChart from '@/components/ui/charts/CountChart.vue';
 import AttendanceChart from '@/components/ui/charts/AttendanceChart.vue';
 import FinanceChart from '@/components/ui/charts/FinanceChart.vue';
 import EventCalendar from '@/components/ui/calendars/EventCalendar.vue';
 import Announcements from '@/components/ui/Announcements.vue';
+import { useDashboardStore } from '@/store/dashboard/dashboard.pinia';
 
-// Loading state
-const loading = ref(false);
+// Dashboard store
+const dashboardStore = useDashboardStore();
+
+// Loading state - store'dan olish
+const loading = computed(() => dashboardStore.isLoading);
+
+// User countlarni store'dan olish
+const userCounts = computed(() => ({
+  admin: dashboardStore.getUserCount('admin'),
+  student: dashboardStore.getUserCount('student'),
+  teacher: dashboardStore.getUserCount('teacher'),
+  parent: dashboardStore.getUserCount('parent'),
+}));
+
+// Component mount bo'lganda statistikalarni yuklash
+onMounted(async () => {
+  await Promise.all([
+    dashboardStore.fetchStatistics(),
+    dashboardStore.fetchStudentsCountStatistics()
+  ]);
+});
+
+// Component unmount bo'lganda store'ni tozalash (ixtiyoriy)
+onBeforeUnmount(() => {
+  dashboardStore.clearStatistics();
+});
 </script>
 
 <style scoped>

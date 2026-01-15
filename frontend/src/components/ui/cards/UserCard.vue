@@ -5,7 +5,7 @@
     :class="cardColorClass"
   >
     <template #title>
-      <a-tag color="blue" class="text-[10px]">2024/25</a-tag>
+      <a-tag color="blue" class="text-[10px]"> {{ currentYear }} </a-tag>
     </template>
     <template #extra>
       <a-dropdown>
@@ -66,7 +66,7 @@ const props = defineProps({
   },
   count: {
     type: Number,
-    default: 1234
+    default: 0
   }
 });
 
@@ -90,8 +90,8 @@ const typeConfig = {
     cardClass: 'bg-gradient-to-br from-green-50 to-green-100',
     icon: 'IconUsersTwo'
   },
-  staff: {
-    label: 'Xodimlar',
+  admin: {
+    label: 'Adminlar',
     color: '#faad14',
     cardClass: 'bg-gradient-to-br from-yellow-50 to-yellow-100',
     icon: 'IconPerson'
@@ -102,7 +102,6 @@ const config = computed(() => typeConfig[props.type] || typeConfig.student);
 const typeLabel = computed(() => config.value.label);
 const valueColor = computed(() => config.value.color);
 const cardColorClass = computed(() => config.value.cardClass);
-
 const iconComponent = computed(() => {
   const iconMap = {
     IconUsers,
@@ -111,6 +110,12 @@ const iconComponent = computed(() => {
     IconPerson
   };
   return iconMap[config.value.icon];
+});
+
+// Yilni computed property sifatida olish
+const currentYear = computed(() => {
+  const year = new Date().getFullYear();
+  return `${year} / ${year + 1}`;
 });
 </script>
 

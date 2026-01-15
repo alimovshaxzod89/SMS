@@ -21,7 +21,11 @@
                             <IconExcel class="w-4 h-4 inline mr-2" />
                             Export
                         </a-menu-item>
-                        <a-menu-item key="3">
+                        <a-menu-item 
+                            key="3"
+                            @click="handleRefresh"
+                            :disabled="loading"    
+                        >
                             <IconRefresh class="w-4 h-4 inline mr-2" />
                             Yangilash
                         </a-menu-item>
@@ -32,13 +36,14 @@
 
         <!-- Chart -->
         <div class="relative">
-            <VueApexCharts 
-                type="radialBar" 
-                height="280" 
-                :options="chartOptions" 
-                :series="series" 
-            />
-
+            <a-spin :spinning="loading" tip="Yuklanmoqda...">
+                <VueApexCharts 
+                    type="radialBar" 
+                    height="280" 
+                    :options="chartOptions" 
+                    :series="series" 
+                />
+            </a-spin>
             <!-- Center Icons -->
             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-2">
                 <IconBoy class="text-[#3498F5] w-8 h-8" />
@@ -54,6 +59,7 @@
                     :value="totalCount" 
                     :value-style="{ color: '#FAE27C', fontSize: '20px' }"
                     :precision="0"
+                    :loading="loading"
                 >
                     <template #prefix>
                         <a-badge color="#FAE27C" />
@@ -66,9 +72,10 @@
             <a-col :span="8">
                 <a-statistic 
                     title="O'g'il bolalar" 
-                    :value="boysCount" 
+                    :value="boysCountValue" 
                     :value-style="{ color: '#3498F5', fontSize: '20px' }"
                     :precision="0"
+                    :loading="loading"
                 >
                     <template #prefix>
                         <a-badge color="#3498F5" />
@@ -81,9 +88,10 @@
             <a-col :span="8">
                 <a-statistic 
                     title="Qiz bolalar" 
-                    :value="girlsCount" 
+                    :value="girlsCountValue" 
                     :value-style="{ color: '#fc038c', fontSize: '20px' }"
                     :precision="0"
+                    :loading="loading"
                 >
                     <template #prefix>
                         <a-badge color="#fc038c" />
@@ -97,7 +105,7 @@
     </a-card>
 </template>
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import IconBoy from '@/components/icon/IconBoy.vue'
 import IconGirl from '@/components/icon/IconGirl.vue'
@@ -105,6 +113,7 @@ import IconBar from '@/components/icon/IconBar.vue'
 import IconEye from '@/components/icon/IconEye.vue'
 import IconExcel from '@/components/icon/IconExcel.vue'
 import IconRefresh from '@/components/icon/IconRefresh.vue'
+import { useDashboardStore } from '@/store/dashboard/dashboard.pinia'
 
 const props = defineProps({
     title: {
@@ -113,26 +122,58 @@ const props = defineProps({
     },
     boysCount: {
         type: Number,
-        default: 65
+        default: null
     },
     girlsCount: {
         type: Number,
-        default: 35
+        default: null
+    },
+    autoFetch:{
+        type: Boolean,
+        default: true
     }
 })
 
-const totalCount = computed(() => props.boysCount + props.girlsCount)
+const dashboardStore = useDashboardStore();
+
+const boysCountValue = computed(() => {
+    return props.boysCount !== null ? props.boysCount : dashboardStore.getBoysCount;
+})
+
+const girlsCountValue = computed(() => {
+    return props.girlsCount !== null ? props.girlsCount : dashboardStore.getGirlsCount;
+})
+
+const loading = computed(() => dashboardStore.isStudentsCountLoading);
+
+const totalCount = computed(() => boysCountValue.value + girlsCountValue.value)
 
 const boysPercentage = computed(() => {
-    return totalCount.value > 0 ? Math.round((props.boysCount / totalCount.value) * 100) : 0
+    return totalCount.value > 0 ? Math.round((boysCountValue.value / totalCount.value) * 100) : 0
 })
 
 const girlsPercentage = computed(() => {
-    return totalCount.value > 0 ? Math.round((props.girlsCount / totalCount.value) * 100) : 0
+    return totalCount.value > 0 ? Math.round((girlsCountValue.value / totalCount.value) * 100) : 0
 })
 
-const series = computed(() => [boysPercentage.value, girlsPercentage.value])
+// Component mount bo'lganda ma'lumotlarni yuklash
+onMounted(async () => {
+    if (props.autoFetch && props.boysCount === null && props.girlsCount === null) {
+        await dashboardStore.fetchStudentsCountStatistics();
+    }
+})
 
+// Refresh funksiyasi
+const handleRefresh = async () => {
+    if (props.autoFetch && props.boysCount === null && props.girlsCount === null) {
+        await dashboardStore.fetchStudentsCountStatistics(true);
+    }
+}
+
+const series = computed(() => {
+    if (totalCount.value === 0) return [0, 0];
+    return [boysPercentage.value, girlsPercentage.value];
+})
 const chartOptions = computed(() => ({
     chart: {
         type: 'radialBar',
