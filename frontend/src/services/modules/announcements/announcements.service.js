@@ -4,12 +4,13 @@ import { useCore } from '@/store/core.pinia';
 const core = useCore();
 
 /**
- * Barcha e'lonlar ro'yxatini olish (pagination va search bilan)
+ * Barcha e'lonlar ro'yxatini olish (pagination, search va filterlar bilan)
  * @param {Object} params - Query parametrlar
  * @param {number} params.page - Sahifa raqami (default: 1)
  * @param {number} params.limit - Har bir sahifadagi elementlar soni (default: 10)
- * @param {string} params.search - Qidiruv so'zi (name, surname, email, username bo'yicha)
- * @param {string} params.subjectId - Fan ID bo'yicha filter
+ * @param {string} params.search - Qidiruv so'zi (title, description bo'yicha)
+ * @param {string} params.classId - Class ID bo'yicha filter
+ * @param {string} params.date - Sanasi bo'yicha filter
  * @returns {Promise} API javobi
  */
 export const getAnnouncements = async (params = {}) => {
@@ -18,14 +19,24 @@ export const getAnnouncements = async (params = {}) => {
   try {
     // Loading holatini yoqish
     core.addLoadingUrl(loadingUrl);
-    
+
+    // API parametrlarini tayyorlash
+    const queryParams = {
+      page: params.page || 1,
+      limit: params.limit || 10,
+      search: params.search || '',
+    };
+
+    if(params.classId){
+      queryParams.classId = params.classId;
+    }
+
+    if(params.date){
+      queryParams.date = params.date;
+    }
     // API so'rovini yuborish
     const response = await api.get('/announcements', {
-      params: {
-        page: params.page || 1,
-        limit: params.limit || 10,
-        search: params.search || '',
-      }
+      params: queryParams
     });
     
     // Muvaffaqiyatli javobni qaytarish

@@ -45,7 +45,7 @@ app.use(mongoSanitize()); // NoSQL injection oldini olish
 // ✅ Rate limiting (ROUTE'LARDAN OLDIN)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 daqiqa
-  max: 100,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100,
   message: {
     success: false,
     error: 'Too many requests from this IP, please try again later'

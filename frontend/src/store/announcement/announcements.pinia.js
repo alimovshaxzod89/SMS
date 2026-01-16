@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { getAnnouncements, getAnnouncement } from '@/services/modules/announcements/announcements.service';
 import { useCore } from '@/store/core.pinia';
+import dayjs from 'dayjs';
 
 export const useAnnouncementsStore = defineStore('announcements', {
     state: () => ({
@@ -19,7 +20,10 @@ export const useAnnouncementsStore = defineStore('announcements', {
         searchQuery: '',
         
         // Filterlar
-        filters: {},
+        filters: {
+            classId: null,
+            date: null,
+        },
         
         // Loading holati
         loading: false,
@@ -32,11 +36,16 @@ export const useAnnouncementsStore = defineStore('announcements', {
         // E'lonlar ro'yxatini qaytarish
         getAnnouncements: (state) => state.announcements,
         
+        // Eng so'nggi e'lonlar (dashboard uchun)
+        getLatestAnnouncements: (state) => (limit = 4) => {
+            return state.announcements.slice(0, limit);
+        },
+        
         // Loading holatini qaytarish
         isLoading: (state) => state.loading,
         
-        // Tanlangan e'lonni qaytarish
-        getSelectedAnnouncement: (state) => state.selectedAnnouncement,
+        // E'lonlar sonini qaytarish
+        getAnnouncementsCount: (state) => state.announcements.length,
     },
     
     actions: {
@@ -54,6 +63,8 @@ export const useAnnouncementsStore = defineStore('announcements', {
                     page: options.page || this.pagination.currentPage,
                     limit: options.pageSize || this.pagination.pageSize,
                     search: options.search || this.searchQuery,
+                    classId: options.classId || this.filters.classId,
+                    date: options.date || this.filters.date,
                 });
                 
                 if (result.success) {
@@ -82,6 +93,17 @@ export const useAnnouncementsStore = defineStore('announcements', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        /**
+         * Eng so'nggi e'lonlarni yuklash (dashboard uchun)
+         * @param {number} limit - E'lonlar soni (default: 4)
+         */
+        async fetchLatestAnnouncements(limit = 4) {
+            await this.fetchAnnouncements({
+                page: 1,
+                pageSize: limit,
+            });
         },
         
         /**
@@ -114,7 +136,45 @@ export const useAnnouncementsStore = defineStore('announcements', {
                 this.loading = false;
             }
         },
-        
+
+        /**
+         * Filterlarni o'rnatish
+         * @param {Object} filters - Filter obyekti
+         */
+        setFilters(filters) {
+            this.filters = { ...this.filters, ...filters };
+        },
+
+        /**
+         * Filterlarni tozalash
+         */
+        clearFilters() {
+            this.filters = {
+                classId: null,
+                date: null,
+            };
+        },
+
+        /**
+         * Qidiruv so'zini o'rnatish
+         * @param {string} searchQuery - Qidiruv so'zi
+         */
+        setSearchQuery(searchQuery) {
+            this.searchQuery = searchQuery;
+        },
+
+        /**
+         * State'ni tozalash
+         */
+        clearAnnouncements() {
+            this.announcements = [];
+            this.selectedAnnouncement = null;
+            this.pagination = {
+                currentPage: 1,
+                pageSize: 10,
+                total: 0,
+                totalPages: 0,
+            };
+        },
     },
 });
-

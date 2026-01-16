@@ -54,32 +54,74 @@
         <!-- Right Side - Calendar and Announcements -->
         <a-col :xs="24" :lg="8">
           <a-space direction="vertical" :size="16" style="width: 100%">
-            <EventCalendar />
+            <EventCalendar @addEvent="handleAddEventFromCalendar" />
             <Announcements />
           </a-space>
         </a-col>
       </a-row>
     </a-spin>
   </div>
+  <a-drawer
+      v-model:open="isFormOpen"
+      :title="'Yangi voqea qo\'shish'"
+      width="500px"
+      destroy-on-close
+      @close="closeForm"
+    >
+      <EventForm
+        :mode="'create'"
+        :loading="false"
+        :event="null"
+        @submit="handleFormSubmit"
+        @cancel="closeForm"
+      />
+    </a-drawer>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+// ============================================
+// IMPORTS
+// ============================================
+
+// Vue Core
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+
+// UI Components - Cards
 import UserCard from '@/components/ui/cards/UserCard.vue';
+
+// UI Components - Charts
 import CountChart from '@/components/ui/charts/CountChart.vue';
 import AttendanceChart from '@/components/ui/charts/AttendanceChart.vue';
 import FinanceChart from '@/components/ui/charts/FinanceChart.vue';
+
+// UI Components - Calendar & Announcements
 import EventCalendar from '@/components/ui/calendars/EventCalendar.vue';
 import Announcements from '@/components/ui/Announcements.vue';
+
+// Form Components
+import EventForm from './events/components/EventForm.vue';
+
+// Stores
 import { useDashboardStore } from '@/store/dashboard/dashboard.pinia';
 
-// Dashboard store
+// ============================================
+// STORE INITIALIZATION
+// ============================================
+
 const dashboardStore = useDashboardStore();
 
-// Loading state - store'dan olish
+// ============================================
+// REACTIVE STATE
+// ============================================
+
+const isFormOpen = ref(false);
+
+// ============================================
+// COMPUTED PROPERTIES
+// ============================================
+
 const loading = computed(() => dashboardStore.isLoading);
 
-// User countlarni store'dan olish
 const userCounts = computed(() => ({
   admin: dashboardStore.getUserCount('admin'),
   student: dashboardStore.getUserCount('student'),
@@ -87,7 +129,41 @@ const userCounts = computed(() => ({
   parent: dashboardStore.getUserCount('parent'),
 }));
 
-// Component mount bo'lganda statistikalarni yuklash
+// ============================================
+// METHODS
+// ============================================
+
+/**
+ * Calendar'dan voqea qo'shish tugmasi bosilganda chaqiriladi
+ */
+const handleAddEventFromCalendar = () => {
+  isFormOpen.value = true;
+};
+
+/**
+ * Event form submit bo'lganda chaqiriladi
+ * @param {Object} event - Yaratilgan event obyekti
+ */
+const handleFormSubmit = (event) => {
+  // Event yaratish logikasi
+  console.log('Event yaratildi:', values);
+  closeForm();
+};
+
+/**
+ * Event form'ni yopish
+ */
+const closeForm = () => {
+  isFormOpen.value = false;
+};
+
+// ============================================
+// LIFECYCLE HOOKS
+// ============================================
+
+/**
+ * Component mount bo'lganda statistikalarni yuklash
+ */
 onMounted(async () => {
   await Promise.all([
     dashboardStore.fetchStatistics(),
@@ -95,7 +171,9 @@ onMounted(async () => {
   ]);
 });
 
-// Component unmount bo'lganda store'ni tozalash (ixtiyoriy)
+/**
+ * Component unmount bo'lganda store'ni tozalash
+ */
 onBeforeUnmount(() => {
   dashboardStore.clearStatistics();
 });
