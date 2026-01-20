@@ -13,11 +13,11 @@ const { protect, authorize } = require('../middleware/auth');
 
 // ✅ Barcha route'larga authentication qo'shish
 router.route('/')
-  .get(protect, authorize('admin', 'teacher'), getAllLessons)
+  .get(protect, authorize('admin', 'teacher', 'student'), getAllLessons)
   .post(protect, authorize('admin'), createLesson);
 
 router.route('/:id')
-  .get(protect, authorize('admin', 'teacher'), getLesson)
+  .get(protect, authorize('admin', 'teacher', 'student'), getLesson)
   .put(protect, authorize('admin'), updateLesson)
   .delete(protect, authorize('admin'), deleteLesson);
 

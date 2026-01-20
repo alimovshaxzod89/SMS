@@ -24,7 +24,7 @@
         <!-- Error state -->
         <div v-else-if="error" class="error-state">
             <p>{{ error }}</p>
-            <button @click="fetchTeacherLessons" class="retry-btn">Qayta urinish</button>
+            <button @click="fetchLessons" class="retry-btn">Qayta urinish</button>
         </div>
 
         <!-- Calendar -->
@@ -49,20 +49,77 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue'
+    import { ref, computed } from 'vue'
     import { VueCal } from 'vue-cal'
     import 'vue-cal/style.css'
     import { useTeacherSchedule } from '@/composables/useTeacherSchedule'
+    import { useStudentSchedule } from '@/composables/useStudentSchedule'
+    import { useAuth } from '@/store/auth/auth.pinia'
     
+    /**
+     * Clean Architecture tamoyillari:
+     * - Dependency Injection: Role bo'yicha composable tanlash
+     * - Single Responsibility: Komponent faqat UI logikasi
+     * - Open/Closed Principle: Yangi role qo'shish oson
+     */
     
-    // Composable'dan ma'lumotlarni olish
-    const { 
-        scheduleEvents, 
-        dateRangeText, 
-        isLoading, 
-        error, 
-        fetchTeacherLessons 
-    } = useTeacherSchedule()
+    const authStore = useAuth()
+    
+    // Role bo'yicha tegishli composable'ni tanlash
+    const isTeacher = computed(() => authStore.role === 'teacher')
+    const isStudent = computed(() => authStore.role === 'student')
+    
+    // Teacher schedule composable
+    const teacherSchedule = useTeacherSchedule()
+    
+    // Student schedule composable
+    const studentSchedule = useStudentSchedule()
+    
+    // Role bo'yicha tegishli ma'lumotlarni olish
+    const scheduleEvents = computed(() => {
+        if (isTeacher.value) {
+            return teacherSchedule.scheduleEvents.value
+        } else if (isStudent.value) {
+            return studentSchedule.scheduleEvents.value
+        }
+        return []
+    })
+    
+    const dateRangeText = computed(() => {
+        if (isTeacher.value) {
+            return teacherSchedule.dateRangeText.value
+        } else if (isStudent.value) {
+            return studentSchedule.dateRangeText.value
+        }
+        return ''
+    })
+    
+    const isLoading = computed(() => {
+        if (isTeacher.value) {
+            return teacherSchedule.isLoading.value
+        } else if (isStudent.value) {
+            return studentSchedule.isLoading.value
+        }
+        return false
+    })
+    
+    const error = computed(() => {
+        if (isTeacher.value) {
+            return teacherSchedule.error.value
+        } else if (isStudent.value) {
+            return studentSchedule.error.value
+        }
+        return null
+    })
+    
+    // Fetch funksiyasi
+    const fetchLessons = () => {
+        if (isTeacher.value) {
+            teacherSchedule.fetchTeacherLessons()
+        } else if (isStudent.value) {
+            studentSchedule.fetchStudentLessons()
+        }
+    }
     
     const currentView = ref('week')
     

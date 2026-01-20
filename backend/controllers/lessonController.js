@@ -1,6 +1,7 @@
 const Lesson = require('../models/Lesson');
 const Class = require('../models/Class');
 const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const Subject = require('../models/Subject');
 const mongoose = require('mongoose');
 
@@ -191,7 +192,38 @@ exports.getAllLessons = async (req, res, next) => {
 
       // Faqat o'sha teacher'ning lesson'larini filter qilish
       query.teacherId = loggedInTeacherId;
-    } else if (teacherId) {
+    } 
+    // ✅ Student role'da bo'lsa, faqat o'z classId'sidagi lesson'larni ko'rsatish
+    else if (req.user.role === 'student') {
+      const studentId = req.user._id || req.user.id;
+      
+      if (!studentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Student ID not found'
+        });
+      }
+
+      // Student ma'lumotlarini olish
+      let student;
+      if (mongoose.Types.ObjectId.isValid(studentId)) {
+        student = await Student.findById(studentId);
+      } else {
+        student = await Student.findOne({ id: studentId });
+      }
+
+      if (!student || !student.classId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Student not found or student has no assigned class'
+        });
+      }
+
+      // Faqat student'ning classId'sidagi lesson'larni filter qilish
+      query.classId = student.classId;
+    } 
+    // Admin uchun filterlar
+    else if (teacherId) {
       // Admin uchun teacherId filter (query parameter orqali)
       query.teacherId = teacherId;
     }
