@@ -6,11 +6,6 @@
 .vscode/
 .idea/
 
-# Cursor IDE Files
-.cursor/
-.cursorrules
-.cursorignore
-
 *.swp
 *.swo
 *~
