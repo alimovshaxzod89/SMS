@@ -45,14 +45,14 @@
     </div>
     
     <!-- List -->
-    <div class="mt-4 overflow-x-auto">
-      <BaseTable 
-        :columns="tableColumns" 
-        :data-source="formattedTeachers" 
+    <div ref="tableWrapperRef" class="mt-2 overflow-x-auto">
+      <BaseTable
+        :columns="tableColumns"
+        :data-source="formattedTeachers"
         :loading="teachersStore.isLoading"
         :pagination="paginationConfig"
         :permissions="permissions"
-        :scroll="{ x: 'max-content' }"
+        :scroll="{ x: 'max-content', y: tableScrollY }"
         @view-row="handleView"
         @edit-row="handleEdit"
         @delete-row="handleDelete"
@@ -64,7 +64,7 @@
 
 <script setup>
 // 1. Imports - Vue core
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 // 2. Imports - Components
 import BaseTable from '@components/base-components/BaseTable.vue';
@@ -82,6 +82,20 @@ import { useTeachersStore } from '@/store/teacher/teachers.pinia';
 const router = useRouter();
 const route = useRoute();
 const teachersStore = useTeachersStore();
+
+// Table wrapper ref & dynamic scroll height
+const tableWrapperRef = ref(null);
+const tableScrollY = ref(400);
+
+// Pagination height (~56px) + bottom margin (24px)
+const BOTTOM_OFFSET = 120;
+
+const calcTableHeight = () => {
+  if (!tableWrapperRef.value) return;
+  const top = tableWrapperRef.value.getBoundingClientRect().top;
+  const availableHeight = window.innerHeight - top - BOTTOM_OFFSET;
+  tableScrollY.value = Math.max(availableHeight, 200);
+};
 
 // 6. Props
 const props = defineProps({
@@ -175,7 +189,6 @@ const tableColumns = computed(() => {
     },
   ];
 
-  // Faqat Admin va Teacher rollari uchun actions columnini qo'shish
   const canManageTeachers = props.role === 'ADMIN' || props.role === 'TEACHER';
   
   if (canManageTeachers) {
@@ -284,13 +297,13 @@ const handleTableChange = ({ pag, filters, sorter }) => {
     // });
   }
 
-  // Kelajakda sorter va filterlarni ham qo'shish mumkin
+  // ToDo
   if (sorter) {
-    // Sorting logikasi
+    // Sorting logic
   }
   
   if (filters) {
-    // Filter logikasi
+    // Filter logic
   }
 };
 
@@ -314,16 +327,11 @@ const handleDelete = (record) => {
 };
 
 // 11. Watchers
-/**
- * URL query params o'zgarganda (browser back/forward) ma'lumotlarni yangilash
- */
 watch(() => route.query, (newQuery) => {
-  // Faqat URL o'zgarganda ishlaydi (component ichida o'zgartirishlar emas)
   const page = parseInt(newQuery.page) || 1;
   const pageSize = parseInt(newQuery.pageSize) || 10;
   const search = newQuery.search || '';
   
-  // Agar store'dagi qiymatlar URL'dan farq qilsa, yangilash
   if (
     teachersStore.pagination.currentPage !== page ||
     teachersStore.pagination.pageSize !== pageSize ||
@@ -339,15 +347,19 @@ watch(() => route.query, (newQuery) => {
 }, { deep: true });
 
 // 12. Lifecycle Hooks
-// Component mount bo'lganda o'qituvchilarni yuklash
 onMounted(() => {
-  // Agar URL'da query params bo'lsa, ularni ishlatish
+  calcTableHeight();
+  window.addEventListener('resize', calcTableHeight);
+
   if (Object.keys(route.query).length > 0) {
     loadFromURL();
   } else {
-    // Aks holda default qiymatlar bilan yuklash
     teachersStore.fetchTeachers();
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', calcTableHeight);
 });
 </script>
 
