@@ -61,8 +61,6 @@ _Reusable assets to port first_
 [17 tools called]
 
 ### Uzbek translation
-Hozirgi sessiya “ask mode”da bo‘lgani uchun fayl yarata olmayman; quyidagi tahlil va yo‘l xaritasini kerakli faylga qo‘lda joylashtirishingizni so‘rayman.
-
 ## Arxitektura tahlili
 - **Loyihaning modul dizayni** `src` papkasi ichidagi modullar bo‘yicha qatlamlangan: `components` (bazaviy va layout atomlari), `pages` (Employee/Client dashboardlari kabi sahifa daraxtlari), `store`, `services`, `composables`, `routers`, `utils`, `styles`. Dashboard sahifalari ichidagi kichik domen papkalari (masalan, `src/pages/dashboard/Client/statistics/modules`) dan ko‘rinib turibdiki, feature-first struktura saqlanadi.
 - **Holat boshqaruvi** Pinia’da domenlarga bo‘lingan `defineStore` fayllari (masalan, `src/store/employee/employees.pinia.js`) katta state modellari, loading URL setlari va servis bilan ishlovchi action’lar orqali boshqariladi; `useCore` markaziy do‘kon toast, drawer, global loader va fayl yuklashni bir joyda tutadi.

@@ -21,7 +21,8 @@ exports.validateTeacher = (req, res, next) => {
     bloodType,
     birthday,
     sex,
-    subjects
+    subjects,
+    img
   } = req.body;
 
   // Required fields
@@ -92,6 +93,15 @@ exports.validateTeacher = (req, res, next) => {
     }
   }
 
+  // Img validation (optional)
+  if (img !== undefined && img !== null && img !== '') {
+    const isUrl = /^https?:\/\/.+/.test(img);
+    const isBase64 = /^data:image\/.+;base64,/.test(img);
+    if (!isUrl && !isBase64) {
+      return validationError(res, 'Invalid image format. Must be a URL or base64 data URI');
+    }
+  }
+
   // Subjects validation (optional array)
   if (subjects !== undefined) {
     if (!Array.isArray(subjects)) {
@@ -127,12 +137,13 @@ exports.validateTeacherUpdate = (req, res, next) => {
     bloodType,
     birthday,
     sex,
-    subjects
+    subjects,
+    img
   } = req.body;
 
   // At least one field must be provided
-  const hasFields = username || password || name || surname || email || 
-                    phone || address || bloodType || birthday || sex || subjects;
+  const hasFields = username || password || name || surname || email ||
+                    phone || address || bloodType || birthday || sex || subjects || img;
   
   if (!hasFields) {
     return validationError(res, 'Please provide at least one field to update');
@@ -211,6 +222,15 @@ exports.validateTeacherUpdate = (req, res, next) => {
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     if (!phoneRegex.test(phone.replace(/[\s-]/g, ''))) {
       return validationError(res, 'Invalid phone number format');
+    }
+  }
+
+  // Img validation (if provided)
+  if (img !== undefined && img !== null && img !== '') {
+    const isUrl = /^https?:\/\/.+/.test(img);
+    const isBase64 = /^data:image\/.+;base64,/.test(img);
+    if (!isUrl && !isBase64) {
+      return validationError(res, 'Invalid image format. Must be a URL or base64 data URI');
     }
   }
 
