@@ -14,8 +14,8 @@ export const TeacherFieldNames = {
   address: "Manzil",                                  
   birthday: "Tug'ilgan kun",
   sex: "Jins",
-  bloodType: "Qon guruhi (A+)",
-  email: "email",
+  bloodType: "Qon guruhi",
+  email: "Email",
   phone: "Telefon raqam",
   img: "Rasm",
   subjects: "Fanlar"
@@ -26,17 +26,20 @@ export const TeacherFieldNames = {
  */
 export const TeacherValidationSchema = {
   name: [required(TeacherFieldNames.name)],
+  surname: [required(TeacherFieldNames.surname)],
+  username: [required(TeacherFieldNames.username)],                                                  
+  password: [
+    required(TeacherFieldNames.password), 
+    { min: 8, message: "Parol kamida 8 ta belgidan iborat bo'lishi kerak", trigger: 'blur' }
+  ],
   email: email(TeacherFieldNames.email),
   phone: phone(TeacherFieldNames.phone),
   address: [required(TeacherFieldNames.address)],
-  username: [required(TeacherFieldNames.username)],                                                  
-  password: [required(TeacherFieldNames.password), { min: 8, message: "Parol kamida 8 ta belgidan iborat bo'lishi kerak" }],
-  surname: [required(TeacherFieldNames.surname)],
   birthday: [required(TeacherFieldNames.birthday)],
-  sex: [required(TeacherFieldNames.sex)],
-  bloodType: [required(TeacherFieldNames.bloodType)],
+  sex: [{ required: true, message: `${TeacherFieldNames.sex} kiritilishi shart`, trigger: 'change' }],
+  bloodType: [{ required: true, message: `${TeacherFieldNames.bloodType} kiritilishi shart`, trigger: 'change' }],
   img: [],
-  subjects: [{max: 10}]
+  subjects: [{ type: 'array', max: 10, message: "Eng ko'pi bilan 10 ta fan tanlash mumkin", trigger: 'change' }],
 };
 
 /**
@@ -50,7 +53,7 @@ export const TeacherInitialState = {
   address: "",                                  
   birthday: null,
   sex: null,
-  bloodType: "A+",
+  bloodType: null,
   email: "",
   phone: "",
   img: "",
@@ -71,7 +74,7 @@ export const mapTeacherToFormState = (teacher) => {
     address: teacher.address || '',                                  
     birthday: teacher.birthday || null,
     sex: teacher.sex || null,
-    bloodType: teacher.bloodType || 'A+',
+    bloodType: teacher.bloodType || null,
     email: teacher.email || '',
     phone: teacher.phone || '',
     img: teacher.img || '',

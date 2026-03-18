@@ -90,37 +90,41 @@
       >
         <a-input v-model:value="formState.email" />
       </a-form-item>
-      <a-form-item
-        label="Phone"
-        name="phone"
-      >
-        <a-input v-model:value="formState.phone" />
-      </a-form-item>
+      
       <a-form-item
         label="Manzil"
         name="address"
       >
         <a-input v-model:value="formState.address" />
       </a-form-item>
-      <a-form-item
-        class="flex-1 mr-1" 
-        label="Fanlar" 
-        name="subjects"
-      >
-        <a-select
-          v-model:value="formState.subjects"
-          mode="multiple"
-          :loading="subjectsLoading"
+      <div class="flex">
+        <a-form-item
+          class="flex-1 mr-1"
+          label="Phone"
+          name="phone"
         >
-          <a-select-option
-            v-for="subject in subjects"
-            :key="subject._id || subject.id"
-            :value="subject._id || subject.id"
+          <a-input v-model:value="formState.phone" />
+        </a-form-item>
+        <a-form-item
+          class="flex-1 ml-1" 
+          label="Fanlar" 
+          name="subjects"
+        >
+          <a-select
+            v-model:value="formState.subjects"
+            mode="multiple"
+            :loading="subjectsLoading"
           >
-            {{ `${subject.name || ''} ${subject.surname || ''}`.trim() }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
+            <a-select-option
+              v-for="subject in subjects"
+              :key="subject._id || subject.id"
+              :value="subject._id || subject.id"
+            >
+              {{ `${subject.name || ''} ${subject.surname || ''}`.trim() }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </div>
       <div class="flex justify-end gap-2">
         <a-button @click="emit('cancel')" :disabled="loading">
           Bekor qilish

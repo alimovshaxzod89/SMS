@@ -21,3 +21,4 @@ export {
 // Schemalar
 export { default as SubjectSchema } from './schemas/subject';
 export { default as TeacherSchema } from './schemas/teacher';
+export { default as StudentSchema } from './schemas/student';
