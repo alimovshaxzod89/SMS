@@ -1,41 +1,69 @@
 <template>
     <div class="p-2">
         <a-form
-            ref="formRef"
+            :ref="formRef"
             :model="formState"
+            :rules="rules"
             layout="vertical"
         >
-            <a-form-item
-                label="F.I.O"
-                name="name"
-                :rules="[{ required: true, message: 'Please input your F.I.O' }]"
-            >
-                <a-input v-model:value="formState.name" />
-            </a-form-item>
-            <a-form-item
-                label="Email"
-                name="email"
-                :rules="[
-                    { required: true, message: 'Please input your email' },
-                    { type: 'email', message: 'Please input a valid email' }
-                ]"
-            >
-                <a-input v-model:value="formState.email" />
-            </a-form-item>
-            <a-form-item
-                label="Phone"
-                name="phone"
-                :rules="[{ required: true, message: 'Please input your phone' }]"
-            >
-                <a-input v-model:value="formState.phone" />
-            </a-form-item>
+            <div class="flex">
+                <a-form-item
+                    label="Ism"
+                    name="name"
+                    class="flex-1 mr-1"
+                >
+                    <a-input v-model:value="formState.name" />
+                </a-form-item>
+                <a-form-item
+                    label="Familya"
+                    name="surname"
+                    class="flex-1 ml-1"
+                >
+                    <a-input v-model:value="formState.surname" />
+                </a-form-item>
+            </div>
+
+            <div class="flex">
+                <a-form-item
+                    label="Username"
+                    name="username"
+                    class="flex-1 mr-1"
+                >
+                    <a-input v-model:value="formState.username" />
+                </a-form-item>
+                <a-form-item
+                    label="Parol"
+                    name="password"
+                    class="flex-1 ml-1"
+                >
+                    <a-input v-model:value="formState.password" type="password" />
+                </a-form-item>
+            </div>
+
+            <div class="flex">
+                <a-form-item
+                    label="Telefon"
+                    name="phone"
+                    class="flex-1 mr-1"
+                >
+                    <a-input v-model:value="formState.phone" placeholder="+998901234567" />
+                </a-form-item>
+                <a-form-item
+                    label="Email (ixtiyoriy)"
+                    name="email"
+                    class="flex-1 ml-1"
+                >
+                    <a-input v-model:value="formState.email" />
+                </a-form-item>
+            </div>
+
             <a-form-item
                 label="Manzil"
                 name="address"
-                :rules="[{ required: true, message: 'Please input your address' }]"
             >
                 <a-input v-model:value="formState.address" />
             </a-form-item>
+
             <div class="flex justify-end gap-2">
                 <a-button
                     @click="emit('cancel')"
@@ -55,87 +83,37 @@
         </a-form>
     </div>
 </template>
+
 <script setup>
-import { ref, watch } from 'vue';
+import { useFormValidation } from '@/composables/useFormValidation';
+import { ParentSchema } from '@/utils/validation';
 
 const props = defineProps({
     mode: {
         type: String,
-        default: 'create' // create or edit
+        default: 'create',
     },
     loading: {
         type: Boolean,
-        default: false
+        default: false,
     },
     parent: {
         type: Object,
-        default: () => ({
-            name: '',
-            email: '',
-            phone: '',
-            address: ''
-        })
-    }
-})
-const emit = defineEmits(['cancel', 'submit']);
-
-const formRef = ref(null);
-const formState = ref({
-    name: '',
-    email: '',
-    phone: '',
-    address: ''
+        default: () => ({ ...ParentSchema.initialState }),
+    },
 });
 
-// Props o'zgarganda formState ni yangilash
-watch(
-    () => props.parent,
-    (newParent) => {
-        if (newParent) {
-            formState.value = {
-                name: newParent.name || '',
-                email: newParent.email || '',
-                phone: newParent.phone || '',
-                address: newParent.address || ''
-            };
-        } else {
-            // Create mode uchun formani tozalash
-            formState.value = {
-                name: '',
-                email: '',
-                phone: '',
-                address: ''
-            };
-        }
-    },
-    { immediate: true, deep: true }
-);
+const emit = defineEmits(['cancel', 'submit']);
 
-// Mode o'zgarganda ham formani tozalash
-watch(
-    () => props.mode,
-    (newMode) => {
-        if (newMode === 'create') {
-            formState.value = {
-                name: '',
-                email: '',
-                phone: '',
-                address: ''
-            };
-            // Form validatsiyasini tozalash
-            formRef.value?.resetFields();
-        }
-    }
-);
+const { formRef, formState, rules, createSubmitHandler, setupWatchers } = useFormValidation({
+    schema: ParentSchema.schema,
+    initialState: ParentSchema.initialState,
+    mapToFormState: ParentSchema.mapToFormState,
+});
 
-const handleSubmit = () => {
-    formRef.value?.validate()
-    .then(() => {
-        emit('submit', formState.value);
-    })
-    .catch((error) => {
-        console.error(error);
-    })
-}
+setupWatchers(() => props, { dataKey: 'parent', modeKey: 'mode' });
+
+const handleSubmit = createSubmitHandler((data) => emit('submit', data));
 </script>
+
 <style scoped></style>

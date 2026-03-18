@@ -1,29 +1,29 @@
 /**
  * Subject form validatsiya schemasi
  */
-import { simpleName, arrayRequired } from '../rules';
+import { simpleName } from '../rules';
 
 /**
  * Form field nomlari (label uchun)
  */
 export const SubjectFieldNames = {
-  name: 'Fan nomi',
-  teachers: "o'qituvchi",
+  name:     "Fan nomi",
+  teachers: "O'qituvchi",
 };
 
 /**
  * Subject form validatsiya qoidalari
  */
 export const SubjectValidationSchema = {
-  name: simpleName(SubjectFieldNames.name, { min: 2, max: 50 }),
-  teachers: arrayRequired(SubjectFieldNames.teachers, { min: 1 }),
+  name:     simpleName(SubjectFieldNames.name, { min: 2, max: 100 }),
+  teachers: [],
 };
 
 /**
  * Bo'sh form state
  */
 export const SubjectInitialState = {
-  name: '',
+  name:     "",
   teachers: [],
 };
 
@@ -35,24 +35,20 @@ export const SubjectInitialState = {
 export const mapSubjectToFormState = (subject) => {
   if (!subject) return { ...SubjectInitialState };
 
-  // Teachers array ichida object bo'lsa, ID ga aylantirish
-  const teacherIds =
-    subject.teachers?.map((teacher) => {
-      if (typeof teacher === 'object' && teacher !== null) {
-        return teacher._id || teacher.id;
-      }
-      return teacher;
-    }) || [];
+  const resolveId = (field) =>
+    typeof field === "object" && field !== null
+      ? field._id || field.id || null
+      : field || null;
 
   return {
-    name: subject.name || '',
-    teachers: teacherIds,
+    name:     subject.name || "",
+    teachers: subject.teachers?.map(resolveId) || [],
   };
 };
 
 export default {
-  fieldNames: SubjectFieldNames,
-  schema: SubjectValidationSchema,
-  initialState: SubjectInitialState,
+  fieldNames:     SubjectFieldNames,
+  schema:         SubjectValidationSchema,
+  initialState:   SubjectInitialState,
   mapToFormState: mapSubjectToFormState,
 };
