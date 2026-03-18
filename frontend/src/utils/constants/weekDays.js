@@ -14,7 +14,7 @@ export const WEEK_DAY_OPTIONS = [
     { label: "Payshanba", value: "THURSDAY" },
     { label: "Juma", value: "FRIDAY" },
     { label: "Shanba", value: "SATURDAY" },
-    { label: "Yakshanba", value: "SUNDAY" },
+    // { label: "Yakshanba", value: "SUNDAY" },
   ];
   
   /**
@@ -27,7 +27,7 @@ export const WEEK_DAY_OPTIONS = [
     THURSDAY: "Payshanba",
     FRIDAY: "Juma",
     SATURDAY: "Shanba",
-    SUNDAY: "Yakshanba",
+    // SUNDAY: "Yakshanba",
   };
   
   /**

@@ -1,35 +1,31 @@
 <template>
   <div class="p-2">
-    <a-form ref="formRef" :model="formState" layout="vertical">
+    <a-form :ref="formRef" :model="formState" :rules="rules" layout="vertical">
       <a-form-item
-        label="Title"
+        label="Imtihon nomi"
         name="title"
-        :rules="[{ required: true, message: 'Please input exam title' }]"
       >
         <a-input v-model:value="formState.title" />
       </a-form-item>
       <div class="flex gap-2">
         <a-form-item
-          label="Start Time"
+          label="Boshlanish vaqti"
           name="startTime"
           class="w-[100%]"
-          :rules="[{ required: true, message: 'Please input exam start time' }]"
         >
           <a-date-picker class="w-[100%]" v-model:value="formState.startTime" />
         </a-form-item>
         <a-form-item
-          label="End Time"
+          label="Tugash vaqti"
           name="endTime"
           class="w-[100%]"
-          :rules="[{ required: true, message: 'Please input exam end time' }]"
         >
           <a-date-picker class="w-[100%]" v-model:value="formState.endTime" />
         </a-form-item>
       </div>
       <a-form-item
-        label="Lesson"
+        label="Dars"
         name="lessonId"
-        :rules="[{ required: true, message: 'Please select a lesson' }]"
       >
         <a-select
           v-model:value="formState.lessonId"
@@ -65,17 +61,20 @@
 </template>
 <script setup>
 // 1. Imports - Vue core
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 // 2. Imports - Utils
 import dayjs from "dayjs";
-// 3. Imports - Services
+// 3. Imports - Composables & Validation
+import { useFormValidation } from "@/composables/useFormValidation";
+import { ExamSchema } from "@/utils/validation";
+// 4. Imports - Services
 import { getLessons } from "@/services/modules/lessons/lessons.service";
 
-// 3. Props
+// 5. Props
 const props = defineProps({
   mode: {
     type: String,
-    default: "create", // create or edit
+    default: "create",
   },
   loading: {
     type: Boolean,
@@ -83,80 +82,28 @@ const props = defineProps({
   },
   exam: {
     type: Object,
-    default: () => ({
-      title: "",
-      startTime: "",
-      endTime: "",
-      lessonId: "",
-    }),
+    default: () => ({}),
   },
 });
 
-// 4. Emits
+// 6. Emits
 const emit = defineEmits(["cancel", "submit"]);
 
-// 5. Reactive State
-const formRef = ref(null);
-const formState = ref({
-  title: "",
-  startTime: "",
-  endTime: "",
-  lessonId: "",
-});
+// 7. Form validation composable
+const { formRef, formState, rules, createSubmitHandler, setupWatchers } =
+  useFormValidation({
+    schema: ExamSchema.schema,
+    initialState: ExamSchema.initialState,
+    mapToFormState: ExamSchema.mapToFormState,
+  });
 
+setupWatchers(() => props, { dataKey: "exam", modeKey: "mode" });
+
+// 8. Reactive State
 const lessons = ref([]);
 const loadingLessons = ref(false);
 
-// 6. Methods
-/**
- * Formani tozalash
- */
-const resetForm = () => {
-  formState.value = {
-    title: "",
-    startTime: "",
-    endTime: "",
-    lessonId: "",
-  };
-  formRef.value?.resetFields();
-};
-
-/**
- * String datani dayjs obyektiga o'girish
- * @param {string|Date|dayjs} date - O'girilishi kerak bo'lgan sana
- * @returns {dayjs|null} - dayjs obyekti yoki null
- */
-const parseDate = (date) => {
-  if (!date) return null;
-  // Agar allaqachon dayjs obyekti bo'lsa
-  if (dayjs.isDayjs(date)) return date;
-  // String yoki Date bo'lsa, dayjs ga o'girish
-  return dayjs(date);
-};
-
-/**
- * Formani exam ma'lumotlari bilan to'ldirish
- * @param {Object} exam - Imtihon ma'lumotlari
- */
-const populateForm = (exam) => {
-  if (exam && Object.keys(exam).length > 0) {
-    // lessonId obyekt bo'lsa, uning _id sini olish
-    const lessonId = 
-      typeof exam.lessonId === 'object' && exam.lessonId !== null
-        ? exam.lessonId._id || exam.lessonId.id
-        : exam.lessonId || "";
-    
-    formState.value = {
-      title: exam.title || "",
-      startTime: parseDate(exam.startTime),
-      endTime: parseDate(exam.endTime),
-      lessonId: lessonId,
-    };
-  } else {
-    resetForm();
-  }
-};
-
+// 9. Methods
 /**
  * Lessonlarni yuklash
  */
@@ -184,52 +131,15 @@ const loadLessons = async () => {
 /**
  * Form submit qilish
  */
-const handleSubmit = () => {
-  formRef.value
-    ?.validate()
-    .then(() => {
-      // dayjs obyektlarini ISO string formatiga o'girish
-      const submitData = {
-        ...formState.value,
-        startTime: formState.value.startTime
-          ? dayjs(formState.value.startTime).toISOString()
-          : null,
-        endTime: formState.value.endTime
-          ? dayjs(formState.value.endTime).toISOString()
-          : null,
-      };
-      emit("submit", submitData);
-    })
-    .catch((error) => {
-      console.error("Form validation error:", error);
-    });
-};
+const handleSubmit = createSubmitHandler((data) => {
+  emit("submit", {
+    ...data,
+    startTime: data.startTime ? dayjs(data.startTime).toISOString() : null,
+    endTime: data.endTime ? dayjs(data.endTime).toISOString() : null,
+  });
+});
 
-// 7. Watchers
-/**
- * Props o'zgarganda formState ni yangilash
- */
-watch(
-  () => props.exam,
-  (newExam) => {
-    populateForm(newExam);
-  },
-  { immediate: true, deep: true }
-);
-
-/**
- * Mode o'zgarganda ham formani tozalash
- */
-watch(
-  () => props.mode,
-  (newMode) => {
-    if (newMode === "create") {
-      resetForm();
-    }
-  }
-);
-
-// 8. Lifecycle Hooks
+// 10. Lifecycle Hooks
 onMounted(() => {
   loadLessons();
 });

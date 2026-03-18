@@ -1,25 +1,20 @@
 <template>
   <div class="p-2">
-    <a-form ref="formRef" :model="formState" layout="vertical">
+    <a-form :ref="formRef" :model="formState" :rules="rules" layout="vertical">
       <a-form-item
-        label="Score"
+        label="Ball"
         name="score"
-        :rules="[
-          { required: true, message: 'Please input score' },
-          { type: 'number', min: 0, max: 100, message: 'Score must be between 0 and 100' }
-        ]"
       >
-        <a-input-number 
-          v-model:value="formState.score" 
-          :min="0" 
-          :max="100" 
+        <a-input-number
+          v-model:value="formState.score"
+          :min="0"
+          :max="100"
           class="w-[100%]"
         />
       </a-form-item>
       <a-form-item
-        label="Student"
+        label="O'quvchi"
         name="studentId"
-        :rules="[{ required: true, message: 'Please select a student' }]"
       >
         <a-select
           v-model:value="formState.studentId"
@@ -37,9 +32,8 @@
         </a-select>
       </a-form-item>
       <a-form-item
-        label="Exam"
+        label="Imtihon"
         name="examId"
-        :rules="[{ required: true, message: 'Please select an exam' }]"
       >
         <a-select
           v-model:value="formState.examId"
@@ -75,16 +69,21 @@
 </template>
 <script setup>
 // 1. Imports - Vue core
-import { onMounted, ref, watch } from "vue";
-// 2. Imports - Services
+import { onMounted, ref } from "vue";
+
+// 2. Imports - Composables & Validation
+import { useFormValidation } from "@/composables/useFormValidation";
+import { ResultSchema } from "@/utils/validation";
+
+// 3. Imports - Services
 import { getStudents } from "@/services/modules/students/students.service";
 import { getExams } from "@/services/modules/exams/exams.service";
 
-// 3. Props
+// 4. Props
 const props = defineProps({
   mode: {
     type: String,
-    default: "create", // create or edit
+    default: "create",
   },
   loading: {
     type: Boolean,
@@ -92,72 +91,30 @@ const props = defineProps({
   },
   result: {
     type: Object,
-    default: () => ({
-      score: "",
-      studentId: "",
-      examId: "",
-    }),
+    default: () => ({}),
   },
 });
 
-// 4. Emits
+// 5. Emits
 const emit = defineEmits(["cancel", "submit"]);
 
-// 5. Reactive State
-const formRef = ref(null);
-const formState = ref({
-  score: "",
-  studentId: "",
-  examId: "",
-});
+// 6. Form validation composable
+const { formRef, formState, rules, createSubmitHandler, setupWatchers } =
+  useFormValidation({
+    schema: ResultSchema.schema,
+    initialState: ResultSchema.initialState,
+    mapToFormState: ResultSchema.mapToFormState,
+  });
 
+setupWatchers(() => props, { dataKey: "result", modeKey: "mode" });
+
+// 7. Reactive State
 const students = ref([]);
 const loadingStudents = ref(false);
 const exams = ref([]);
 const loadingExams = ref(false);
 
-// 6. Methods
-/**
- * Formani tozalash
- */
-const resetForm = () => {
-  formState.value = {
-    score: "",
-    studentId: "",
-    examId: "",
-  };
-  formRef.value?.resetFields();
-};
-
-/**
- * Formani result ma'lumotlari bilan to'ldirish
- * @param {Object} result - Natija ma'lumotlari
- */
-const populateForm = (result) => {
-    console.log(result)
-  if (result && Object.keys(result).length > 0) {
-    // studentId obyekt bo'lsa, uning _id sini olish
-    const studentId = 
-      typeof result.studentId === 'object' && result.studentId !== null
-        ? result.studentId._id || result.studentId.id
-        : result.studentId || "";
-    
-    // examId obyekt bo'lsa, uning _id sini olish
-    const examId = 
-      typeof result.examId === 'object' && result.examId !== null
-        ? result.examId._id || result.examId.id
-        : result.examId || "";
-    
-    formState.value = {
-      score: result.score || "",
-      studentId: studentId,
-      examId: examId,
-    };
-  } else {
-    resetForm();
-  }
-};
-
+// 8. Methods
 /**
  * O'quvchilarni yuklash
  */
@@ -209,46 +166,14 @@ const loadExams = async () => {
 /**
  * Form submit qilish
  */
-const handleSubmit = () => {
-  formRef.value
-    ?.validate()
-    .then(() => {
-      emit("submit", formState.value);
-    })
-    .catch((error) => {
-      console.error("Form validation error:", error);
-    });
-};
+const handleSubmit = createSubmitHandler((data) => {
+  emit("submit", data);
+});
 
-// 7. Watchers
-/**
- * Props o'zgarganda formState ni yangilash
- */
-watch(
-  () => props.result,
-  (newResult) => {
-    populateForm(newResult);
-  },
-  { immediate: true, deep: true }
-);
-
-/**
- * Mode o'zgarganda ham formani tozalash
- */
-watch(
-  () => props.mode,
-  (newMode) => {
-    if (newMode === "create") {
-      resetForm();
-    }
-  }
-);
-
-// 8. Lifecycle Hooks
+// 9. Lifecycle Hooks
 onMounted(() => {
   loadStudents();
   loadExams();
 });
 </script>
 <style scoped></style>
-

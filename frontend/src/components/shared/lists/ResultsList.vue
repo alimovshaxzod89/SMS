@@ -189,14 +189,14 @@ const tableColumns = computed(() => {
 const formattedResults = computed(() => {
   return resultsStore.getResults.map(result => ({
     ...result,
-    key: result._id || result.id, // Table uchun unique key
-    date: dayjs(result.createdAt).format('DD.MM.YYYY'),
-    class: result.exam.lessonId.classId.name,
-    teacher: result.exam.lessonId.teacherId.name,
-    student: result.student.name,
-    studentId: result.student._id || result.student.id,
-    subject: result.exam.lessonId.subjectId.name,
-    examId: result.exam._id || result.exam.id,
+    key: result._id || result.id,
+    date: result.createdAt ? dayjs(result.createdAt).format('DD.MM.YYYY') : '-',
+    class:   result.exam?.lessonId?.classId?.name   || '-',
+    teacher: result.exam?.lessonId?.teacherId?.name || '-',
+    student: result.student?.name                   || '-',
+    studentId: result.student?._id || result.student?.id || '',
+    subject: result.exam?.lessonId?.subjectId?.name || '-',
+    examId:  result.exam?._id || result.exam?.id    || '',
   }));
 });
 

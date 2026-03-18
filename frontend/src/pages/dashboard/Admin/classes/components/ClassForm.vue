@@ -1,74 +1,71 @@
 <template>
     <div class="p-2">
         <a-form
-            ref="formRef"
+            :ref="formRef"
             :model="formState"
+            :rules="rules"
             layout="vertical"
         >
-            <a-form-item
-                label="Sinf nomi"
-                name="name"
-                :rules="[{ required: true, message: 'Sinf nomini kiriting' }]"
-            >
+            <a-form-item label="Sinf nomi" name="name">
                 <a-input v-model:value="formState.name" />
             </a-form-item>
-            <a-form-item
-                label="Sig'im"
-                name="capacity"
-                :rules="[
-                    { required: true, message: 'Sig\'imni kiriting' },
-                    { type: 'number', min: 1, message: 'Sig\'im 1 dan katta bo\'lishi kerak' }
-                ]"
-            >
-                <a-input-number 
-                    v-model:value="formState.capacity" 
+            <a-form-item label="Sig'im" name="capacity">
+                <a-input-number
+                    v-model:value="formState.capacity"
                     :min="1"
                     class="w-full"
                 />
             </a-form-item>
-            <a-form-item
-                label="Daraja"
-                name="gradeId"
-                :rules="[{ required: true, message: 'Darajani tanlang' }]"
-            >
-                <a-select 
-                    v-model:value="formState.gradeId" 
+            <a-form-item label="Daraja" name="gradeId">
+                <a-select
+                    v-model:value="formState.gradeId"
                     :loading="loadingGrades"
                     placeholder="Darajani tanlang"
                 >
-                    <a-select-option 
-                        v-for="grade in grades" 
-                        :key="grade._id || grade.id" 
+                    <a-select-option
+                        v-for="grade in grades"
+                        :key="grade._id || grade.id"
                         :value="grade._id || grade.id"
                     >
                         {{ grade.level || grade.name || grade }}
                     </a-select-option>
                 </a-select>
             </a-form-item>
-            <a-form-item
-                label="Supervisor (O'qituvchi)"
-                name="supervisorId"
-            >
-                <a-select 
-                    v-model:value="formState.supervisorId" 
+            <a-form-item label="Supervisor (O'qituvchi)" name="supervisorId">
+                <a-select
+                    v-model:value="formState.supervisorId"
                     :loading="loadingTeachers"
                     placeholder="O'qituvchini tanlang (ixtiyoriy)"
                     allow-clear
                 >
-                    <a-select-option 
-                        v-for="teacher in teachers" 
-                        :key="teacher._id || teacher.id" 
+                    <a-select-option
+                        v-for="teacher in teachers"
+                        :key="teacher._id || teacher.id"
                         :value="teacher._id || teacher.id"
                     >
                         {{ `${teacher.name || ''} ${teacher.surname || ''}`.trim() }}
                     </a-select-option>
                 </a-select>
             </a-form-item>
-            <div class="flex justify-end gap-2">
-                <a-button
-                    @click="emit('cancel')"
-                    :disabled="loading"
+            <a-form-item label="O'quvchilar" name="students">
+                <a-select
+                    v-model:value="formState.students"
+                    mode="multiple"
+                    :loading="loadingStudents"
+                    placeholder="O'quvchilarni tanlang (ixtiyoriy)"
+                    allow-clear
                 >
+                    <a-select-option
+                        v-for="student in students"
+                        :key="student._id || student.id"
+                        :value="student._id || student.id"
+                    >
+                        {{ `${student.name || ''} ${student.surname || ''}`.trim() }}
+                    </a-select-option>
+                </a-select>
+            </a-form-item>
+            <div class="flex justify-end gap-2">
+                <a-button @click="emit('cancel')" :disabled="loading">
                     Bekor qilish
                 </a-button>
                 <a-button
@@ -83,189 +80,122 @@
         </a-form>
     </div>
 </template>
+
 <script setup>
-// 1. Imports
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useFormValidation } from '@/composables/useFormValidation';
+import { ClassSchema } from '@/utils/validation';
 import { getTeachers } from '@/services/modules/teachers/teachers.service';
+import { getStudents } from '@/services/modules/students/students.service';
 import api from '@/utils/api';
 import { useCore } from '@/store/core.pinia';
 
 const core = useCore();
 
-// 2. Props
+// Props
 const props = defineProps({
     mode: {
         type: String,
-        default: 'create' // create or edit
+        default: 'create',
     },
     loading: {
         type: Boolean,
-        default: false
+        default: false,
     },
     classData: {
         type: Object,
-        default: () => ({
-            name: '',
-            capacity: null,
-            gradeId: null,
-            supervisorId: null
-        })
-    }
+        default: () => null,
+    },
 });
 
-// 3. Emits
+// Emits
 const emit = defineEmits(['cancel', 'submit']);
 
-// 4. Refs / State
-const formRef = ref(null);
-const formState = ref({
-    name: '',
-    capacity: null,
-    gradeId: null,
-    supervisorId: null
+// Form validatsiya - composable orqali
+const { formRef, formState, rules, createSubmitHandler, setupWatchers } =
+    useFormValidation({
+        schema:         ClassSchema.schema,
+        initialState:   ClassSchema.initialState,
+        mapToFormState: ClassSchema.mapToFormState,
+    });
+
+// Watchers setup
+setupWatchers(() => props, { dataKey: 'classData', modeKey: 'mode' });
+
+// Submit handler
+const handleSubmit = createSubmitHandler((data) => {
+    emit('submit', data);
 });
 
-// Local state
+// Teachers
 const teachers = ref([]);
-const grades = ref([]);
 const loadingTeachers = ref(false);
-const loadingGrades = ref(false);
-
-// 5. Methods
-const handleSubmit = () => {
-    formRef.value?.validate()
-        .then(() => {
-            emit('submit', formState.value);
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-};
 
 const loadTeachers = async () => {
-    if (teachers.value.length === 0) {
-        loadingTeachers.value = true;
-        try {
-            const result = await getTeachers({ 
-                page: 1, 
-                limit: 100
-            });
-            
-            if (result.success) {
-                teachers.value = result.data;
-            }
-        } catch (error) {
-            console.error('O\'qituvchilarni yuklashda xatolik:', error);
-            teachers.value = [];
-        } finally {
-            loadingTeachers.value = false;
+    if (teachers.value.length > 0) return;
+
+    loadingTeachers.value = true;
+    try {
+        const result = await getTeachers({ page: 1, limit: 100 });
+        if (result.success) {
+            teachers.value = result.data;
         }
+    } catch (error) {
+        console.error("O'qituvchilarni yuklashda xatolik:", error);
+        teachers.value = [];
+    } finally {
+        loadingTeachers.value = false;
     }
 };
+
+// Grades
+const grades = ref([]);
+const loadingGrades = ref(false);
 
 const loadGrades = async () => {
-    if (grades.value.length === 0) {
-        loadingGrades.value = true;
-        try {
-            // Grades ro'yxatini olish uchun API endpoint
-            const response = await api.get('/grades', {
-                params: {
-                    page: 1,
-                    limit: 100
-                }
-            });
-            
-            if (response.data.success) {
-                grades.value = response.data.data || [];
-            }
-        } catch (error) {
-            console.error('Grades ro\'yxatini yuklashda xatolik:', error);
-            core.setToast({
-                type: 'error',
-                message: 'Darajalarni yuklashda xatolik yuz berdi',
-            });
-            grades.value = [];
-        } finally {
-            loadingGrades.value = false;
+    if (grades.value.length > 0) return;
+
+    loadingGrades.value = true;
+    try {
+        const response = await api.get('/grades', { params: { page: 1, limit: 100 } });
+        if (response.data.success) {
+            grades.value = response.data.data || [];
         }
+    } catch (error) {
+        console.error("Grades ro'yxatini yuklashda xatolik:", error);
+        core.setToast({ type: 'error', message: 'Darajalarni yuklashda xatolik yuz berdi' });
+        grades.value = [];
+    } finally {
+        loadingGrades.value = false;
     }
 };
 
-// 6. Watchers
-// Props o'zgarganda formState ni yangilash
-watch(
-    () => props.classData,
-    (newClass) => {
-        if (newClass && Object.keys(newClass).length > 0) {
-            // gradeId ni to'g'ri formatlash
-            // gradeId object bo'lsa (populate qilingan), uning _id ni olish
-            // Aks holda to'g'ridan-to'g'ri gradeId ni ishlatish
-            let gradeId = null;
-            if (newClass.gradeId) {
-                if (typeof newClass.gradeId === 'object' && newClass.gradeId._id) {
-                    gradeId = newClass.gradeId._id;
-                } else if (typeof newClass.gradeId === 'object' && newClass.gradeId.id) {
-                    gradeId = newClass.gradeId.id;
-                } else {
-                    gradeId = newClass.gradeId;
-                }
-            }
-            
-            // supervisorId ni to'g'ri formatlash
-            // supervisorId object bo'lsa (populate qilingan), uning _id ni olish
-            // Aks holda to'g'ridan-to'g'ri supervisorId ni ishlatish
-            let supervisorId = null;
-            if (newClass.supervisorId) {
-                if (typeof newClass.supervisorId === 'object' && newClass.supervisorId._id) {
-                    supervisorId = newClass.supervisorId._id;
-                } else if (typeof newClass.supervisorId === 'object' && newClass.supervisorId.id) {
-                    supervisorId = newClass.supervisorId.id;
-                } else {
-                    supervisorId = newClass.supervisorId;
-                }
-            }
-            
-            formState.value = {
-                name: newClass.name || '',
-                capacity: newClass.capacity || null,
-                gradeId: gradeId,
-                supervisorId: supervisorId
-            };
-        } else {
-            // Create mode uchun formani tozalash
-            formState.value = {
-                name: '',
-                capacity: null,
-                gradeId: null,
-                supervisorId: null
-            };
-        }
-    },
-    { immediate: true, deep: true }
-);
+// Students
+const students = ref([]);
+const loadingStudents = ref(false);
 
-// Mode o'zgarganda ham formani tozalash
-watch(
-    () => props.mode,
-    (newMode) => {
-        if (newMode === 'create') {
-            formState.value = {
-                name: '',
-                capacity: null,
-                gradeId: null,
-                supervisorId: null
-            };
-            // Form validatsiyasini tozalash
-            formRef.value?.resetFields();
+const loadStudents = async () => {
+    if (students.value.length > 0) return;
+
+    loadingStudents.value = true;
+    try {
+        const result = await getStudents({ page: 1, limit: 200 });
+        if (result.success) {
+            students.value = result.data;
         }
+    } catch (error) {
+        console.error("O'quvchilarni yuklashda xatolik:", error);
+        students.value = [];
+    } finally {
+        loadingStudents.value = false;
     }
-);
+};
 
-// 7. Lifecycle Hooks
 onMounted(() => {
     loadTeachers();
     loadGrades();
+    loadStudents();
 });
 </script>
-<style scoped></style>
 
+<style scoped></style>
