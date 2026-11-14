@@ -23,3 +23,5 @@ onMounted(() => {
   height: 100%;
 }
 </style>
+
+<!-- TO DO: We shoud add user upload and push to git hub -->
